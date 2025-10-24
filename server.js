@@ -160,24 +160,35 @@ async function sendOrderConfirmationEmail(orderDetails) {
 // Middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173',
-    'http://localhost:3000',
-    'https://your-frontend-url.vercel.app', // We'll update this later
-    /\.vercel\.app$/ // Allow all Vercel preview URLs
+    'http://localhost:5173/',
+    'http://localhost:3000/',
+    'https://johnrick-auto-supply.vercel.app/',
+    /.vercel.app$/,
+    /.railway.app$/
   ],
   credentials: true
 }));
 app.use(bodyParser.json());
-app.use(express.static('public')); // Serve your HTML/CSS/JS files
-app.use(express.static('.')); // Also serve files from root directory
 
-// Serve HTML pages explicitly
+// API Root - Health Check
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.json({ 
+    message: 'Johnrick Auto Supply API',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      products: '/api/products',
+      categories: '/api/categories',
+      orders: '/api/orders',
+      customers: '/api/customers',
+      login: '/api/login'
+    }
+  });
 });
 
-app.get('/profile.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'profile.html'));
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
 app.get('/cart.html', (req, res) => {
