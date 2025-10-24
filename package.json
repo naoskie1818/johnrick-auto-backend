@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "postinstall": "npm rebuild sqlite3 --update-binary"
   },
   "dependencies": {
     "body-parser": "^1.20.2",
