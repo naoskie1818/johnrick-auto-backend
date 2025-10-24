@@ -160,11 +160,10 @@ async function sendOrderConfirmationEmail(orderDetails) {
 // Middleware
 app.use(cors({
   origin: [
-    'http://localhost:5173/',
-    'http://localhost:3000/',
-    'https://johnrick-auto-supply.vercel.app/',
-    /.vercel.app$/,
-    /.railway.app$/
+    'http://localhost:5173',
+    'http://localhost:3000',
+    process.env.FRONTEND_URL, // Vercel frontend URL
+    /\.vercel\.app$/ // All Vercel preview URLs
   ],
   credentials: true
 }));
