@@ -17,31 +17,34 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Email configuration (only if nodemailer is available)
+// ⚠️ IMPORTANT CHANGE: Use process.env for security
 const EMAIL_CONFIG = {
   service: 'gmail',
   auth: {
-    user: 'johnrickautosupply@gmail.com', // Replace with your email
-    pass: 'axgopjwoaxhxqovn' // Replace with your app password
+    user: process.env.EMAIL_USER, // Will load from Railway
+    pass: process.env.EMAIL_PASS  // Will load from Railway
   }
 };
 
 // Create email transporter
 let mailTransporter = null;
 
-if (nodemailer && EMAIL_CONFIG.auth.user !== 'your-email@gmail.com') {
+// Change the check to use process.env
+if (nodemailer && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   try {
+    // ... rest of the code remains the same
     mailTransporter = nodemailer.createTransport({
       service: EMAIL_CONFIG.service,
       auth: EMAIL_CONFIG.auth
     });
     console.log('✅ Email service configured');
   } catch (error) {
-    console.log('⚠️  Email configuration error:', error.message);
+    // ...
   }
 } else if (!nodemailer) {
   console.log('📧 Email features disabled (nodemailer not installed)');
 } else {
-  console.log('⚠️  Email not configured. Update EMAIL_CONFIG in server.js');
+  console.log('⚠️  Email not configured. Set EMAIL_USER and EMAIL_PASS environment variables.'); // Updated message
 }
 
 // Function to send order confirmation email
@@ -515,20 +518,24 @@ app.post('/api/orders', (req, res) => {
             emailSent: false
           };
           
-          // Send confirmation email (async)
-          const emailResult = await sendOrderConfirmationEmail(orderDetails);
-          orderDetails.emailSent = emailResult.success;
-          
-          if (emailResult.success) {
-            console.log('✅ Email sent successfully');
-          } else {
-            console.log('📧 Email not sent:', emailResult.message);
-          }
-          
-          // Respond with order ID and receipt data
+          // Send confirmation email (ASYNCHRONOUSLY - DO NOT AWAIT)
+          // This allows the HTTP response to be sent immediately.
+          sendOrderConfirmationEmail(orderDetails)
+            .then(emailResult => {
+                if (emailResult.success) {
+                    console.log('✅ Background email sent successfully');
+                } else {
+                    console.log('📧 Background email failed:', emailResult.message);
+                }
+            })
+            .catch(err => {
+                console.error('❌ Error during background email send:', err);
+            });
+
+          // Respond with order ID and receipt data IMMEDIATELY
           res.json({ 
             orderId, 
-            message: 'Order placed successfully',
+            message: 'Order placed successfully (Receipt email is processing)',
             receiptData: orderDetails
           });
         });
