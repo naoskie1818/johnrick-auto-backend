@@ -21,7 +21,7 @@ const EMAIL_CONFIG = {
   service: 'gmail',
   auth: {
     user: 'johnrickautosupply@gmail.com', // Replace with your email
-    pass: 'johnrickautosupply123' // Replace with your app password
+    pass: 'axgopjwoaxhxqovn' // Replace with your app password
   }
 };
 
