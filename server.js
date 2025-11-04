@@ -290,7 +290,7 @@ function initDatabase() {
     });
 
     // Insert default admin user (password: admin)
-    db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`, (err) => {
+    db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('syadmin', 'admin', 'admin')`, (err) => {
       if (err) console.error('Error inserting admin user:', err);
       else console.log('Admin user ready');
     });
