@@ -644,26 +644,38 @@ app.delete('/api/customers/:id', (req, res) => {
   });
 });
 
-// Admin Login
+// Admin Login (Handles POST request from login.html)
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
+
+  // IMPORTANT: This assumes your Admin accounts are stored in a table named 'users' 
+  // and have a column named 'role'
   db.get(
-    'SELECT * FROM users WHERE username = ? AND password = ?',
+    'SELECT id, username, role FROM users WHERE username = ? AND password = ?',
     [username, password],
     (err, row) => {
       if (err) {
-        res.status(500).json({ error: err.message });
-      } else if (row) {
-        res.json({ 
-          success: true, 
-          user: { 
-            id: row.id, 
-            username: row.username, 
-            role: row.role  // ← Make sure this is included
-          } 
-        });
+        // Database error
+        console.error('Database error during Admin login:', err.message);
+        return res.status(500).json({ error: err.message });
+      } 
+      
+      if (row) {
+        // User found - Now check if they are an administrator
+        if (row.role === 'admin') {
+          // Success: User is an admin
+          res.json({
+            success: true,
+            user: { id: row.id, username: row.username, role: row.role },
+            message: 'Admin login successful'
+          });
+        } else {
+          // Failure: User exists but is not an admin
+          res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
+        }
       } else {
-        res.status(401).json({ success: false, message: 'Invalid credentials' });
+        // Failure: User not found or incorrect credentials
+        res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
     }
   );
