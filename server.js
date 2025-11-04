@@ -645,10 +645,10 @@ app.delete('/api/customers/:id', (req, res) => {
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
+  // 🛑 DEBUG QUERY: Fetch user by username ONLY
   db.get(
-    // ✅ CRITICAL FIX: Use 'username' and 'password' columns to match the inputs
-    'SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
-    [username, password], // Passes the correct inputs to the correct columns
+    'SELECT id, username, password, role FROM users WHERE username = ?', // Removed password check
+    [username], 
     (err, row) => {
       if (err) {
         console.error('Database error during Admin login:', err.message);
@@ -656,16 +656,28 @@ app.post('/api/login', (req, res) => {
       } 
       
       if (row) {
-        if (row.role === 'admin') {
-          res.json({
-            success: true,
-            user: { id: row.id, username: row.username, role: row.role },
-            message: 'Admin login successful'
-          });
+        // ✅ DEBUG LOG: Log the password stored in the database
+        console.log(`🔑 DEBUG: Stored Password for ${row.username}: [${row.password}]`);
+        console.log(`🔑 DEBUG: Submitted Password: [${password}]`);
+        
+        // Final password comparison logic
+        if (row.password === password) {
+            // Password matches
+            if (row.role === 'admin') {
+                res.json({
+                    success: true,
+                    user: { id: row.id, username: row.username, role: row.role },
+                    message: 'Admin login successful'
+                });
+            } else {
+                res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
+            }
         } else {
-          res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
+            // Password does NOT match
+            res.status(401).json({ success: false, message: 'Invalid username or password' });
         }
       } else {
+        // User not found
         res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
     }
