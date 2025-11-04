@@ -736,12 +736,19 @@ app.post('/api/customers/login', (req, res) => {
 app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);
     
-    // CRITICAL: Database Initialization and Default Admin Creation
+    // Database Initialization and Default Admin Creation
     db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)", (err) => {
         if (!err) {
-            // This line ensures an 'admin' account exists with username: 'admin' and password: 'admin'
-            db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')");
-            console.log("✅ Users table ensured. Default admin: admin/admin");
+            // Use run() directly and check for errors, this guarantees the insert is attempted
+            db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')", function(insertErr) {
+                if (insertErr) {
+                    console.error("❌ Error inserting default admin:", insertErr.message);
+                } else if (this.changes > 0) {
+                    console.log("✅ Default admin user inserted: admin/admin");
+                } else {
+                    console.log("ℹ️ Default admin user already exists.");
+                }
+            });
         } else {
             console.error("❌ Error creating users table:", err.message);
         }
