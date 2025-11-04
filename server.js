@@ -645,10 +645,10 @@ app.delete('/api/customers/:id', (req, res) => {
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
-  // 🛑 DEBUG QUERY: Fetch user by username ONLY
   db.get(
-    'SELECT id, username, password, role FROM users WHERE username = ?', // Removed password check
-    [username], 
+    // ✅ FINAL CORRECT QUERY: Matches username and password columns
+    'SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
+    [username, password],
     (err, row) => {
       if (err) {
         console.error('Database error during Admin login:', err.message);
@@ -656,28 +656,19 @@ app.post('/api/login', (req, res) => {
       } 
       
       if (row) {
-        // ✅ DEBUG LOG: Log the password stored in the database
-        console.log(`🔑 DEBUG: Stored Password for ${row.username}: [${row.password}]`);
-        console.log(`🔑 DEBUG: Submitted Password: [${password}]`);
-        
-        // Final password comparison logic
-        if (row.password === password) {
-            // Password matches
-            if (row.role === 'admin') {
-                res.json({
-                    success: true,
-                    user: { id: row.id, username: row.username, role: row.role },
-                    message: 'Admin login successful'
-                });
-            } else {
-                res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
-            }
+        // User found - Check if they are an administrator
+        if (row.role === 'admin') {
+          // ... success logic ...
+          res.json({
+            success: true,
+            user: { id: row.id, username: row.username, role: row.role },
+            message: 'Admin login successful'
+          });
         } else {
-            // Password does NOT match
-            res.status(401).json({ success: false, message: 'Invalid username or password' });
+          res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
         }
       } else {
-        // User not found
+        // User not found or incorrect credentials
         res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
     }
@@ -746,21 +737,16 @@ app.listen(PORT, () => {
 	// Step 1: Ensure the users table exists
 db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)", (err) => {
     if (!err) {
-        // STEP 1: DELETE the potentially corrupted 'admin' record
-        db.run("DELETE FROM users WHERE username = 'admin'", (deleteErr) => {
-            if (deleteErr) {
-                console.error("❌ Error deleting old admin:", deleteErr.message);
-                return;
+        // STEP 1: Insert the user if they don't exist (harmless)
+        db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')");
+        
+        // STEP 2: FORCE UPDATE the password for 'admin' to plain text 'admin'
+        db.run("UPDATE users SET password = 'admin' WHERE username = 'admin'", function(updateErr) {
+            if (updateErr) {
+                console.error("❌ Error updating admin password:", updateErr.message);
+            } else {
+                console.log("✅ Admin user password FORCE-UPDATED to: admin/admin");
             }
-            
-            // STEP 2: NESTED INSERT - GUARANTEES EXECUTION AFTER DELETE
-            db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')", function(insertErr) {
-                if (insertErr) {
-                    console.error("❌ Error inserting default admin:", insertErr.message);
-                } else {
-                    console.log("✅ Admin user guaranteed clean: admin/admin");
-                }
-            });
         });
     } else {
         console.error("❌ Error creating users table:", err.message);
