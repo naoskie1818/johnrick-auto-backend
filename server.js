@@ -288,6 +288,23 @@ function initDatabase() {
       if (err) console.error('Error creating customers table:', err);
       else console.log('Customers table ready');
     });
+	
+	// Update orders table to add customer_id and received_at if they don't exist
+  db.run(`ALTER TABLE orders ADD COLUMN customer_id INTEGER`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Error adding customer_id:', err);
+    } else if (!err) {
+      console.log('✓ Added customer_id column to orders table');
+    }
+  });
+
+  db.run(`ALTER TABLE orders ADD COLUMN received_at TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Error adding received_at:', err);
+    } else if (!err) {
+      console.log('✓ Added received_at column to orders table');
+    }
+  });
 
     // Insert default admin user (password: admin)
     db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`, (err) => {
@@ -473,6 +490,57 @@ app.delete('/api/products/:id', (req, res) => {
 
 // ========== ORDER ROUTES ==========
 
+// Get customer orders
+app.get('/api/customers/:customerId/orders', (req, res) => {
+  const { customerId } = req.params;
+  
+  db.all(
+    `SELECT o.*, 
+     GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     WHERE o.customer_id = ?
+     GROUP BY o.id
+     ORDER BY o.created_at DESC`,
+    [customerId],
+    (err, rows) => {
+      if (err) {
+        console.error('Error fetching customer orders:', err);
+        res.status(500).json({ error: err.message });
+      } else {
+        console.log(`Found ${rows.length} orders for customer ${customerId}`);
+        res.json(rows);
+      }
+    }
+  );
+});
+
+// Update order status (mark as received)
+app.put('/api/orders/:orderId/received', (req, res) => {
+  const { orderId } = req.params;
+  
+  console.log(`Marking order ${orderId} as received`);
+  
+  db.run(
+    'UPDATE orders SET status = ?, received_at = CURRENT_TIMESTAMP WHERE id = ?',
+    ['Received', orderId],
+    function(err) {
+      if (err) {
+        console.error('Error updating order status:', err);
+        res.status(500).json({ error: err.message });
+      } else if (this.changes === 0) {
+        res.status(404).json({ error: 'Order not found' });
+      } else {
+        console.log(`✓ Order ${orderId} marked as received`);
+        res.json({ 
+          success: true, 
+          message: 'Thank you! Your order has been marked as received. We hope you enjoy your purchase!' 
+        });
+      }
+    }
+  );
+});
+
 // Create order
 app.post('/api/orders', (req, res) => {
   const { customer_name, email, address, payment_method, items, total } = req.body;
@@ -583,6 +651,49 @@ app.get('/api/customers/:id', (req, res) => {
         res.json(row);
       } else {
         res.status(404).json({ error: 'Customer not found' });
+      }
+    }
+  );
+});
+
+// Get customer orders
+app.get('/api/customers/:customerId/orders', (req, res) => {
+  const { customerId } = req.params;
+  
+  db.all(
+    `SELECT o.*, 
+     GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items
+     FROM orders o
+     LEFT JOIN order_items oi ON o.id = oi.order_id
+     WHERE o.customer_id = ?
+     GROUP BY o.id
+     ORDER BY o.created_at DESC`,
+    [customerId],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json(rows);
+      }
+    }
+  );
+});
+
+// Update order status (mark as received)
+app.put('/api/orders/:orderId/received', (req, res) => {
+  const { orderId } = req.params;
+  
+  db.run(
+    'UPDATE orders SET status = ?, received_at = CURRENT_TIMESTAMP WHERE id = ?',
+    ['Received', orderId],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ 
+          success: true, 
+          message: 'Thank you! Your order has been marked as received.' 
+        });
       }
     }
   );
