@@ -746,13 +746,15 @@ app.listen(PORT, () => {
 	// Step 1: Ensure the users table exists
 db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)", (err) => {
     if (!err) {
-        // 🔑 STEP 2: DELETE AND RE-INSERT THE CLEAN 'admin' RECORD
-        // 1. Delete the potentially corrupted 'admin' record
+        // STEP 1: DELETE the potentially corrupted 'admin' record
         db.run("DELETE FROM users WHERE username = 'admin'", (deleteErr) => {
-            if (deleteErr) console.error("Error deleting old admin:", deleteErr.message);
+            if (deleteErr) {
+                console.error("❌ Error deleting old admin:", deleteErr.message);
+                return;
+            }
             
-            // 2. Insert the clean 'admin/admin' record
-            db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')", function(insertErr) {
+            // STEP 2: NESTED INSERT - GUARANTEES EXECUTION AFTER DELETE
+            db.run("INSERT INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')", function(insertErr) {
                 if (insertErr) {
                     console.error("❌ Error inserting default admin:", insertErr.message);
                 } else {
