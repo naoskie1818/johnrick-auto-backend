@@ -645,7 +645,7 @@ app.delete('/api/customers/:id', (req, res) => {
 });
 
 // Admin Login (Handles POST request from login.html)
-app.post('/api/login', (req, res) => {
+app.post('/login', (req, res) => {
   const { username, password } = req.body;
 
   // IMPORTANT: This assumes your Admin accounts are stored in a table named 'users' 
