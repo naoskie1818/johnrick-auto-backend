@@ -239,14 +239,17 @@ function initDatabase() {
 
     // Create orders table
     db.run(`CREATE TABLE IF NOT EXISTS orders (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      customer_name TEXT NOT NULL,
-      email TEXT NOT NULL,
-      address TEXT NOT NULL,
-      payment_method TEXT NOT NULL,
-      total REAL NOT NULL,
-      order_date DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`, (err) => {
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  customer_id INTEGER,
+  customer_name TEXT NOT NULL,
+  customer_email TEXT NOT NULL,
+  customer_address TEXT NOT NULL,
+  payment_method TEXT NOT NULL,
+  total_amount REAL NOT NULL,
+  status TEXT DEFAULT 'Pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  received_at TEXT
+)`, (err) => {
       if (err) console.error('Error creating orders table:', err);
       else console.log('Orders table ready');
     });
@@ -543,14 +546,14 @@ app.put('/api/orders/:orderId/received', (req, res) => {
 
 // Create order
 app.post('/api/orders', (req, res) => {
-  const { customer_name, email, address, payment_method, items, total } = req.body;
+  const { customer_id, customer_name, customer_email, customer_address, payment_method, items, total_amount } = req.body;
   
   console.log('Creating order for:', customer_name);
   console.log('Items:', items);
   
   db.run(
-    'INSERT INTO orders (customer_name, email, address, payment_method, total) VALUES (?, ?, ?, ?, ?)',
-    [customer_name, email, address, payment_method, total],
+    'INSERT INTO orders (customer_id, customer_name, customer_email, customer_address, payment_method, total_amount, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [customer_id, customer_name, customer_email, customer_address, payment_method, total_amount, 'Pending'],
     function(err) {
       if (err) {
         console.error('Error creating order:', err);
