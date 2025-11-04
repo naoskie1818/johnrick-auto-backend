@@ -734,5 +734,16 @@ app.post('/api/customers/login', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`✅ Server running on port ${PORT}`);
+    
+    // CRITICAL: Database Initialization and Default Admin Creation
+    db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)", (err) => {
+        if (!err) {
+            // This line ensures an 'admin' account exists with username: 'admin' and password: 'admin'
+            db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')");
+            console.log("✅ Users table ensured. Default admin: admin/admin");
+        } else {
+            console.error("❌ Error creating users table:", err.message);
+        }
+    });
 });
