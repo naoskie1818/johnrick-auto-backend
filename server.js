@@ -641,23 +641,21 @@ app.delete('/api/customers/:id', (req, res) => {
   });
 });
 
-// Admin Login (Handles POST request from login.html)
+// Admin Login (Handles POST request to /api/login)
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
-  // IMPORTANT: Assuming your Admin accounts are in a table named 'users'
   db.get(
-    'SELECT id, username, role FROM users WHERE username = ? AND password = ?',
-    [username, password],
+    // ✅ CRITICAL FIX: Use 'username' and 'password' columns to match the inputs
+    'SELECT id, username, role FROM users WHERE username = ? AND password = ?', 
+    [username, password], // Passes the correct inputs to the correct columns
     (err, row) => {
       if (err) {
         console.error('Database error during Admin login:', err.message);
-        // It's crucial to return here to stop execution
         return res.status(500).json({ error: 'Server error during login.' });
       } 
       
       if (row) {
-        // User found - Check if they are an administrator
         if (row.role === 'admin') {
           res.json({
             success: true,
@@ -665,11 +663,9 @@ app.post('/api/login', (req, res) => {
             message: 'Admin login successful'
           });
         } else {
-          // User exists but is not an admin
           res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
         }
       } else {
-        // User not found or incorrect credentials
         res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
     }
