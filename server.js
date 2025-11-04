@@ -654,7 +654,14 @@ app.post('/api/login', (req, res) => {
       if (err) {
         res.status(500).json({ error: err.message });
       } else if (row) {
-        res.json({ success: true, user: { id: row.id, username: row.username, role: row.role } });
+        res.json({ 
+          success: true, 
+          user: { 
+            id: row.id, 
+            username: row.username, 
+            role: row.role  // ← Make sure this is included
+          } 
+        });
       } else {
         res.status(401).json({ success: false, message: 'Invalid credentials' });
       }
