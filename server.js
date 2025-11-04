@@ -162,8 +162,7 @@ async function sendOrderConfirmationEmail(orderDetails) {
 
 // Middleware
 app.use(cors({
-  // Temporarily allow ALL origins to rule out CORS as the 404 cause
-    origin: '*', 
+    origin: '*', // Allows requests from any frontend (like your Vercel URL)
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
 }));
@@ -646,37 +645,35 @@ app.delete('/api/customers/:id', (req, res) => {
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
 
-  // IMPORTANT: This assumes your Admin accounts are stored in a table named 'users' 
-  // and have a column named 'role'
+  // IMPORTANT: Assuming your Admin accounts are in a table named 'users'
   db.get(
-        'SELECT id, username, role FROM users WHERE username = ? AND password = ?',
-        [username, password],
-        (err, row) => {
-            if (err) {
-                // Database error
-                console.error('Database error during Admin login:', err.message);
-                return res.status(500).json({ error: err.message });
-            } 
-            
-            if (row) {
-                // User found - Now check if they are an administrator
-                if (row.role === 'admin') {
-                    // Success: User is an admin
-                    res.json({
-                        success: true,
-                        user: { id: row.id, username: row.username, role: row.role },
-                        message: 'Admin login successful'
-                    });
-                } else {
-                    // Failure: User exists but is not an admin
-                    res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
-                }
-            } else {
-                // Failure: User not found or incorrect credentials
-                res.status(401).json({ success: false, message: 'Invalid username or password' });
-            }
+    'SELECT id, username, role FROM users WHERE username = ? AND password = ?',
+    [username, password],
+    (err, row) => {
+      if (err) {
+        console.error('Database error during Admin login:', err.message);
+        // It's crucial to return here to stop execution
+        return res.status(500).json({ error: 'Server error during login.' });
+      } 
+      
+      if (row) {
+        // User found - Check if they are an administrator
+        if (row.role === 'admin') {
+          res.json({
+            success: true,
+            user: { id: row.id, username: row.username, role: row.role },
+            message: 'Admin login successful'
+          });
+        } else {
+          // User exists but is not an admin
+          res.status(401).json({ success: false, message: 'Access denied: Not an administrator' });
         }
-    );
+      } else {
+        // User not found or incorrect credentials
+        res.status(401).json({ success: false, message: 'Invalid username or password' });
+      }
+    }
+  );
 });
 
 // Customer Signup
