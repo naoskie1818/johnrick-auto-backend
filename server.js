@@ -162,12 +162,10 @@ async function sendOrderConfirmationEmail(orderDetails) {
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://johnrick-auto-frontend.vercel.app', // Vercel frontend URL
-    /\.vercel\.app$/ // All Vercel preview URLs
-  ],
-  credentials: true
+  // Temporarily allow ALL origins to rule out CORS as the 404 cause
+    origin: '*', 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
 }));
 app.use(bodyParser.json());
 
