@@ -290,7 +290,7 @@ function initDatabase() {
     });
 
     // Insert default admin user (password: admin)
-    db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('syadmin', 'admin', 'admin')`, (err) => {
+    db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`, (err) => {
       if (err) console.error('Error inserting admin user:', err);
       else console.log('Admin user ready');
     });
@@ -743,4 +743,25 @@ app.post('/api/customers/login', (req, res) => {
 // Start server
 app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);  
+	// Step 1: Ensure the users table exists
+db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT UNIQUE, password TEXT, role TEXT)", (err) => {
+    if (!err) {
+        // 🔑 STEP 2: DELETE AND RE-INSERT THE CLEAN 'admin' RECORD
+        // 1. Delete the potentially corrupted 'admin' record
+        db.run("DELETE FROM users WHERE username = 'admin'", (deleteErr) => {
+            if (deleteErr) console.error("Error deleting old admin:", deleteErr.message);
+            
+            // 2. Insert the clean 'admin/admin' record
+            db.run("INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')", function(insertErr) {
+                if (insertErr) {
+                    console.error("❌ Error inserting default admin:", insertErr.message);
+                } else {
+                    console.log("✅ Admin user guaranteed clean: admin/admin");
+                }
+            });
+        });
+    } else {
+        console.error("❌ Error creating users table:", err.message);
+    }
+});
 });
