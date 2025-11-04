@@ -309,6 +309,40 @@ function initDatabase() {
     }
   });
 
+  db.run(`ALTER TABLE orders ADD COLUMN customer_email TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Error adding customer_email:', err);
+    } else if (!err) {
+      console.log('✓ Added customer_email column to orders table');
+    }
+  });
+
+  db.run(`ALTER TABLE orders ADD COLUMN customer_address TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Error adding customer_address:', err);
+    } else if (!err) {
+      console.log('✓ Added customer_address column to orders table');
+    }
+  });
+
+  db.run(`ALTER TABLE orders ADD COLUMN total_amount REAL`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Error adding total_amount:', err);
+    } else if (!err) {
+      console.log('✓ Added total_amount column to orders table');
+    }
+  });
+
+  db.run(`ALTER TABLE orders ADD COLUMN status TEXT DEFAULT 'Pending'`, (err) => {
+    if (err && !err.message.includes('duplicate column')) {
+      console.error('Error adding status:', err);
+    } else if (!err) {
+      console.log('✓ Added status column to orders table');
+    }
+  });
+
+  console.log('Orders table schema migration complete');
+
     // Insert default admin user (password: admin)
     db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`, (err) => {
       if (err) console.error('Error inserting admin user:', err);
