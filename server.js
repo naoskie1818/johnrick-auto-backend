@@ -663,6 +663,70 @@ app.get('/api/orders', (req, res) => {
   });
 });
 
+// Get all orders (Admin)
+app.get('/api/orders', (req, res) => {
+  const { status } = req.query;
+  
+  let query = `
+    SELECT o.*, 
+    GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items
+    FROM orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+  `;
+  
+  let params = [];
+  
+  if (status) {
+    query += ' WHERE o.status = ?';
+    params.push(status);
+  }
+  
+  query += ' GROUP BY o.id ORDER BY o.created_at DESC';
+  
+  db.all(query, params, (err, rows) => {
+    if (err) {
+      console.error('Error fetching orders:', err);
+      res.status(500).json({ error: err.message });
+    } else {
+      console.log(`Found ${rows.length} orders`);
+      res.json(rows);
+    }
+  });
+});
+
+// Update order status (Admin)
+app.put('/api/orders/:orderId/status', (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+  
+  const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Received', 'Cancelled'];
+  
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ error: 'Invalid status' });
+  }
+  
+  console.log(`Updating order ${orderId} to status: ${status}`);
+  
+  db.run(
+    'UPDATE orders SET status = ? WHERE id = ?',
+    [status, orderId],
+    function(err) {
+      if (err) {
+        console.error('Error updating order status:', err);
+        res.status(500).json({ error: err.message });
+      } else if (this.changes === 0) {
+        res.status(404).json({ error: 'Order not found' });
+      } else {
+        console.log(`✓ Order ${orderId} status updated to ${status}`);
+        res.json({ 
+          success: true, 
+          message: `Order status updated to ${status}` 
+        });
+      }
+    }
+  );
+});
+
 // ========== CUSTOMER ROUTES ==========
 
 // Get all customers
