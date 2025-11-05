@@ -607,15 +607,15 @@ app.post('/api/orders', (req, res) => {
         stmt.finalize();
         
         // Get order date
-        db.get('SELECT order_date FROM orders WHERE id = ?', [orderId], async (err, row) => {
+        db.get('SELECT created_at as order_date FROM orders WHERE id = ?', [orderId], async (err, row) => {
           const orderDetails = {
             orderId,
             customer_name,
-            email,
-            address,
+            email: customer_email,      // ← Fixed
+            address: customer_address,  // ← Fixed
             payment_method,
             items,
-            total,
+            total: total_amount,        // ← Fixed
             order_date: row ? row.order_date : new Date().toISOString(),
             emailSent: false
           };
