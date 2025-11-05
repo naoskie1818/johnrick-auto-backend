@@ -667,6 +667,8 @@ app.get('/api/orders', (req, res) => {
 app.get('/api/orders', (req, res) => {
   const { status } = req.query;
   
+  console.log('Getting orders with status filter:', status); // Debug log
+  
   let query = `
     SELECT o.*, 
     GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items
@@ -676,19 +678,23 @@ app.get('/api/orders', (req, res) => {
   
   let params = [];
   
-  if (status) {
+  if (status && status !== '') {
     query += ' WHERE o.status = ?';
     params.push(status);
+    console.log('Filtering by status:', status); // Debug log
   }
   
   query += ' GROUP BY o.id ORDER BY o.created_at DESC';
+  
+  console.log('SQL Query:', query); // Debug log
+  console.log('SQL Params:', params); // Debug log
   
   db.all(query, params, (err, rows) => {
     if (err) {
       console.error('Error fetching orders:', err);
       res.status(500).json({ error: err.message });
     } else {
-      console.log(`Found ${rows.length} orders`);
+      console.log(`Found ${rows.length} orders with filter: ${status || 'none'}`); // Debug log
       res.json(rows);
     }
   });
