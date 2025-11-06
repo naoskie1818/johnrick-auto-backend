@@ -538,7 +538,7 @@ app.get('/api/customers/:customerId/orders', (req, res) => {
      LEFT JOIN order_items oi ON o.id = oi.order_id
      WHERE o.customer_id = ?
      GROUP BY o.id
-     ORDER BY o.created_at DESC`,
+     ORDER BY o.id DESC`,
     [customerId],
     (err, rows) => {
       if (err) {
