@@ -646,23 +646,6 @@ app.post('/api/orders', (req, res) => {
   );
 });
 
-// Get all orders
-app.get('/api/orders', (req, res) => {
-  db.all(`
-    SELECT o.*, GROUP_CONCAT(oi.product_name) as products
-    FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    GROUP BY o.id
-    ORDER BY o.order_date DESC
-  `, (err, rows) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      res.json(rows);
-    }
-  });
-});
-
 // Get all orders (Admin)
 app.get('/api/orders', (req, res) => {
   const { status } = req.query;
