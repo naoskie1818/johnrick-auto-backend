@@ -667,7 +667,7 @@ app.get('/api/orders', (req, res) => {
     console.log('🔍 Filtering by status:', status);
   }
   
-  query += ' GROUP BY o.id ORDER BY o.created_at DESC';
+  query += ' GROUP BY o.id ORDER BY o.id DESC';
   
   console.log('SQL Query:', query);
   console.log('SQL Params:', params);
