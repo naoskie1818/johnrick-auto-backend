@@ -985,6 +985,46 @@ app.post('/api/customers/login', (req, res) => {
   );
 });
 
+// TEMPORARY: Reset orders table
+app.post('/api/reset-orders-table', (req, res) => {
+  console.log('🔄 Dropping old orders table...');
+  
+  db.run('DROP TABLE IF EXISTS orders', (err) => {
+    if (err) {
+      console.error('❌ Error dropping orders table:', err);
+      return res.status(500).json({ error: err.message });
+    }
+    
+    console.log('✓ Old orders table dropped');
+    console.log('🔄 Creating new orders table with correct schema...');
+    
+    db.run(`CREATE TABLE orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER,
+      customer_name TEXT NOT NULL,
+      customer_email TEXT NOT NULL,
+      customer_address TEXT NOT NULL,
+      payment_method TEXT NOT NULL,
+      total_amount REAL NOT NULL,
+      status TEXT DEFAULT 'Pending',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      received_at TEXT
+    )`, (err) => {
+      if (err) {
+        console.error('❌ Error creating orders table:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      
+      console.log('✅ Orders table recreated successfully with new schema');
+      
+      res.json({ 
+        success: true, 
+        message: 'Orders table recreated with correct schema. You can now place orders!' 
+      });
+    });
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
     console.log(`✅ Server running on port ${PORT}`);  
