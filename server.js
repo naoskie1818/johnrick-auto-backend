@@ -729,6 +729,59 @@ app.get('/api/customers', (req, res) => {
   });
 });
 
+// Cancel order (Customer)
+app.put('/api/orders/:orderId/cancel', (req, res) => {
+  const { orderId } = req.params;
+  const { customer_id } = req.body;
+  
+  console.log(`Customer ${customer_id} requesting to cancel order ${orderId}`);
+  
+  // First check if order belongs to this customer and can be cancelled
+  db.get(
+    'SELECT * FROM orders WHERE id = ? AND customer_id = ?',
+    [orderId, customer_id],
+    (err, order) => {
+      if (err) {
+        console.error('Error fetching order:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      
+      if (!order) {
+        return res.status(404).json({ error: 'Order not found or unauthorized' });
+      }
+      
+      // Only allow cancellation if order is Pending or Processing
+      if (order.status === 'Shipped' || order.status === 'Delivered' || order.status === 'Received') {
+        return res.status(400).json({ 
+          error: 'Cannot cancel order that has been shipped or delivered' 
+        });
+      }
+      
+      if (order.status === 'Cancelled') {
+        return res.status(400).json({ error: 'Order is already cancelled' });
+      }
+      
+      // Update order status to Cancelled
+      db.run(
+        'UPDATE orders SET status = ? WHERE id = ?',
+        ['Cancelled', orderId],
+        function(err) {
+          if (err) {
+            console.error('Error cancelling order:', err);
+            res.status(500).json({ error: err.message });
+          } else {
+            console.log(`✓ Order ${orderId} cancelled successfully`);
+            res.json({ 
+              success: true, 
+              message: 'Order cancelled successfully' 
+            });
+          }
+        }
+      );
+    }
+  );
+});
+
 // Get customer by ID
 app.get('/api/customers/:id', (req, res) => {
   db.get(
