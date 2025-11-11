@@ -376,21 +376,21 @@ function initDatabase() {
 
 // Insert default manufacturers with logos
 const defaultManufacturers = [
-  { name: 'Toyota', logo: 'https://www.carlogos.org/logo/Toyota-logo-1989-2560x1440.png' },
-  { name: 'Honda', logo: 'https://www.carlogos.org/logo/Honda-logo-1024x768.png' },
-  { name: 'Mitsubishi', logo: 'https://www.carlogos.org/logo/Mitsubishi-logo-2000x2500.png' },
-  { name: 'Nissan', logo: 'https://www.carlogos.org/logo/Nissan-logo-2013-1024x768.png' },
-  { name: 'Mazda', logo: 'https://www.carlogos.org/logo/Mazda-logo-1997-2560x1440.png' },
-  { name: 'Suzuki', logo: 'https://www.carlogos.org/logo/Suzuki-logo-5000x2500.png' },
-  { name: 'Isuzu', logo: 'https://www.carlogos.org/logo/Isuzu-logo-2560x1440.png' },
-  { name: 'Ford', logo: 'https://www.carlogos.org/logo/Ford-logo-2003-2560x1440.png' },
-  { name: 'Chevrolet', logo: 'https://www.carlogos.org/logo/Chevrolet-logo-2013-2560x1440.png' },
-  { name: 'Hyundai', logo: 'https://www.carlogos.org/logo/Hyundai-logo-2011-2560x1440.png' },
-  { name: 'Kia', logo: 'https://www.carlogos.org/logo/Kia-logo-2560x1440.png' },
-  { name: 'BMW', logo: 'https://www.carlogos.org/logo/BMW-logo-2020-2560x1440.png' },
-  { name: 'Mercedes-Benz', logo: 'https://www.carlogos.org/logo/Mercedes-Benz-logo-2011-1920x1080.png' },
-  { name: 'Audi', logo: 'https://www.carlogos.org/logo/Audi-logo-2009-1920x1080.png' },
-  { name: 'Volkswagen', logo: 'https://www.carlogos.org/logo/Volkswagen-logo-2019-2560x1440.png' }
+  { name: 'Toyota', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Toyota.svg/200px-Toyota.svg.png' },
+  { name: 'Honda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Honda_logo.svg/200px-Honda_logo.svg.png' },
+  { name: 'Mitsubishi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Mitsubishi_logo.svg/200px-Mitsubishi_logo.svg.png' },
+  { name: 'Nissan', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Nissan_logo.svg/200px-Nissan_logo.svg.png' },
+  { name: 'Mazda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Mazda_logo_with_emblem.svg/200px-Mazda_logo_with_emblem.svg.png' },
+  { name: 'Suzuki', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Suzuki_logo_2.svg/200px-Suzuki_logo_2.svg.png' },
+  { name: 'Isuzu', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Isuzu_logo.svg/200px-Isuzu_logo.svg.png' },
+  { name: 'Ford', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/200px-Ford_logo_flat.svg.png' },
+  { name: 'Chevrolet', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Chevrolet_logo.svg/200px-Chevrolet_logo.svg.png' },
+  { name: 'Hyundai', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hyundai_Motor_Company_logo.svg/200px-Hyundai_Motor_Company_logo.svg.png' },
+  { name: 'Kia', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/KIA_logo2.svg/200px-KIA_logo2.svg.png' },
+  { name: 'BMW', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/BMW_logo_%28gray%29.svg/200px-BMW_logo_%28gray%29.svg.png' },
+  { name: 'Mercedes-Benz', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/200px-Mercedes-Logo.svg.png' },
+  { name: 'Audi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Audi_2016.svg/200px-Audi_2016.svg.png' },
+  { name: 'Volkswagen', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/200px-Volkswagen_logo_2019.svg.png' }
 ];
 
 const insertManufacturer = db.prepare('INSERT OR IGNORE INTO manufacturers (name, logo) VALUES (?, ?)');
@@ -809,69 +809,6 @@ app.get('/api/products/:productId/manufacturers', (req, res) => {
       }
     }
   );
-});
-
-// TEMPORARY: Reset manufacturers with logos (call once, then remove)
-app.post('/api/reset-manufacturers', (req, res) => {
-  console.log('🔄 Resetting manufacturers table with logos...');
-  
-  db.run('DROP TABLE IF EXISTS manufacturers', (err) => {
-    if (err) {
-      console.error('Error dropping manufacturers table:', err);
-      return res.status(500).json({ error: err.message });
-    }
-    
-    console.log('✓ Manufacturers table dropped');
-    
-    db.run(`CREATE TABLE manufacturers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE NOT NULL,
-      logo TEXT
-    )`, (err) => {
-      if (err) {
-        console.error('Error creating manufacturers table:', err);
-        return res.status(500).json({ error: err.message });
-      }
-      
-      console.log('✓ Manufacturers table created');
-      
-      const defaultManufacturers = [
-        { name: 'Toyota', logo: 'https://www.carlogos.org/logo/Toyota-logo-1989-2560x1440.png' },
-        { name: 'Honda', logo: 'https://www.carlogos.org/logo/Honda-logo-1024x768.png' },
-        { name: 'Mitsubishi', logo: 'https://www.carlogos.org/logo/Mitsubishi-logo-2000x2500.png' },
-        { name: 'Nissan', logo: 'https://www.carlogos.org/logo/Nissan-logo-2013-1024x768.png' },
-        { name: 'Mazda', logo: 'https://www.carlogos.org/logo/Mazda-logo-1997-2560x1440.png' },
-        { name: 'Suzuki', logo: 'https://www.carlogos.org/logo/Suzuki-logo-5000x2500.png' },
-        { name: 'Isuzu', logo: 'https://www.carlogos.org/logo/Isuzu-logo-2560x1440.png' },
-        { name: 'Ford', logo: 'https://www.carlogos.org/logo/Ford-logo-2003-2560x1440.png' },
-        { name: 'Chevrolet', logo: 'https://www.carlogos.org/logo/Chevrolet-logo-2013-2560x1440.png' },
-        { name: 'Hyundai', logo: 'https://www.carlogos.org/logo/Hyundai-logo-2011-2560x1440.png' },
-        { name: 'Kia', logo: 'https://www.carlogos.org/logo/Kia-logo-2560x1440.png' },
-        { name: 'BMW', logo: 'https://www.carlogos.org/logo/BMW-logo-2020-2560x1440.png' },
-        { name: 'Mercedes-Benz', logo: 'https://www.carlogos.org/logo/Mercedes-Benz-logo-2011-1920x1080.png' },
-        { name: 'Audi', logo: 'https://www.carlogos.org/logo/Audi-logo-2009-1920x1080.png' },
-        { name: 'Volkswagen', logo: 'https://www.carlogos.org/logo/Volkswagen-logo-2019-2560x1440.png' }
-      ];
-      
-      const stmt = db.prepare('INSERT INTO manufacturers (name, logo) VALUES (?, ?)');
-      defaultManufacturers.forEach(m => {
-        stmt.run(m.name, m.logo);
-      });
-      stmt.finalize((err) => {
-        if (err) {
-          console.error('Error inserting manufacturers:', err);
-          return res.status(500).json({ error: err.message });
-        }
-        
-        console.log('✅ Manufacturers reset with logos successfully');
-        res.json({ 
-          success: true, 
-          message: 'Manufacturers table reset with logos',
-          count: defaultManufacturers.length 
-        });
-      });
-    });
-  });
 });
 
 // Get all orders (Admin)
