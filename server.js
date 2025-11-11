@@ -811,56 +811,6 @@ app.get('/api/products/:productId/manufacturers', (req, res) => {
   );
 });
 
-// TEMPORARY: Fix broken logo URLs
-app.post('/api/fix-manufacturer-logos', (req, res) => {
-  console.log('🔄 Updating manufacturer logos...');
-  
-  const manufacturers = [
-    { name: 'Toyota', logo: 'https://cdn.freebiesupply.com/logos/large/2x/toyota-logo-png-transparent.png' },
-    { name: 'Honda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/honda-logo-png-transparent.png' },
-    { name: 'Mitsubishi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mitsubishi-logo-png-transparent.png' },
-    { name: 'Nissan', logo: 'https://cdn.freebiesupply.com/logos/large/2x/nissan-6-logo-png-transparent.png' },
-    { name: 'Mazda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mazda-logo-png-transparent.png' },
-    { name: 'Suzuki', logo: 'https://cdn.freebiesupply.com/logos/large/2x/suzuki-logo-png-transparent.png' },
-    { name: 'Isuzu', logo: 'https://cdn.freebiesupply.com/logos/large/2x/isuzu-logo-png-transparent.png' },
-    { name: 'Ford', logo: 'https://logo.clearbit.com/ford.com' },
-    { name: 'Chevrolet', logo: 'https://cdn.freebiesupply.com/logos/large/2x/chevrolet-logo-png-transparent.png' },
-    { name: 'Hyundai', logo: 'https://cdn.freebiesupply.com/logos/large/2x/hyundai-logo-png-transparent.png' },
-    { name: 'Kia', logo: 'https://cdn.freebiesupply.com/logos/large/2x/kia-logo-png-transparent.png' },
-    { name: 'BMW', logo: 'https://cdn.freebiesupply.com/logos/large/2x/bmw-logo-png-transparent.png' },
-    { name: 'Mercedes-Benz', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mercedes-benz-logo-png-transparent.png' },
-    { name: 'Audi', logo: 'https://logo.clearbit.com/audi.com' },
-    { name: 'Volkswagen', logo: 'https://cdn.freebiesupply.com/logos/large/2x/volkswagen-logo-png-transparent.png' }
-  ];
-  
-  let updated = 0;
-  const stmt = db.prepare('UPDATE manufacturers SET logo = ? WHERE name = ?');
-  
-  manufacturers.forEach(m => {
-    stmt.run(m.logo, m.name, function(err) {
-      if (err) {
-        console.error(`Error updating ${m.name}:`, err);
-      } else if (this.changes > 0) {
-        updated++;
-        console.log(`✓ Updated ${m.name} logo`);
-      }
-    });
-  });
-  
-  stmt.finalize((err) => {
-    if (err) {
-      res.status(500).json({ error: err.message });
-    } else {
-      console.log(`✅ Updated ${updated} manufacturer logos`);
-      res.json({ 
-        success: true, 
-        message: `Updated ${updated} manufacturer logos`,
-        updated: updated
-      });
-    }
-  });
-});
-
 // Get all orders (Admin)
 app.get('/api/orders', (req, res) => {
   const { status } = req.query;
