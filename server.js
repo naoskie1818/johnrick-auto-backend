@@ -376,21 +376,21 @@ function initDatabase() {
 
 // Insert default manufacturers with logos
 const defaultManufacturers = [
-  { name: 'Toyota', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Toyota.svg/200px-Toyota.svg.png' },
-  { name: 'Honda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Honda_logo.svg/200px-Honda_logo.svg.png' },
-  { name: 'Mitsubishi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Mitsubishi_logo.svg/200px-Mitsubishi_logo.svg.png' },
-  { name: 'Nissan', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Nissan_logo.svg/200px-Nissan_logo.svg.png' },
-  { name: 'Mazda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Mazda_logo_with_emblem.svg/200px-Mazda_logo_with_emblem.svg.png' },
-  { name: 'Suzuki', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Suzuki_logo_2.svg/200px-Suzuki_logo_2.svg.png' },
-  { name: 'Isuzu', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Isuzu_logo.svg/200px-Isuzu_logo.svg.png' },
-  { name: 'Ford', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/200px-Ford_logo_flat.svg.png' },
-  { name: 'Chevrolet', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Chevrolet_logo.svg/200px-Chevrolet_logo.svg.png' },
-  { name: 'Hyundai', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hyundai_Motor_Company_logo.svg/200px-Hyundai_Motor_Company_logo.svg.png' },
-  { name: 'Kia', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/KIA_logo2.svg/200px-KIA_logo2.svg.png' },
-  { name: 'BMW', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/BMW_logo_%28gray%29.svg/200px-BMW_logo_%28gray%29.svg.png' },
-  { name: 'Mercedes-Benz', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/200px-Mercedes-Logo.svg.png' },
-  { name: 'Audi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Audi_2016.svg/200px-Audi_2016.svg.png' },
-  { name: 'Volkswagen', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/200px-Volkswagen_logo_2019.svg.png' }
+  { name: 'Toyota', logo: 'https://cdn.freebiesupply.com/logos/large/2x/toyota-logo-png-transparent.png' },
+  { name: 'Honda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/honda-logo-png-transparent.png' },
+  { name: 'Mitsubishi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mitsubishi-logo-png-transparent.png' },
+  { name: 'Nissan', logo: 'https://cdn.freebiesupply.com/logos/large/2x/nissan-6-logo-png-transparent.png' },
+  { name: 'Mazda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mazda-logo-png-transparent.png' },
+  { name: 'Suzuki', logo: 'https://cdn.freebiesupply.com/logos/large/2x/suzuki-logo-png-transparent.png' },
+  { name: 'Isuzu', logo: 'https://cdn.freebiesupply.com/logos/large/2x/isuzu-logo-png-transparent.png' },
+  { name: 'Ford', logo: 'https://cdn.freebiesupply.com/logos/large/2x/ford-logo-png-transparent.png' },
+  { name: 'Chevrolet', logo: 'https://cdn.freebiesupply.com/logos/large/2x/chevrolet-logo-png-transparent.png' },
+  { name: 'Hyundai', logo: 'https://cdn.freebiesupply.com/logos/large/2x/hyundai-logo-png-transparent.png' },
+  { name: 'Kia', logo: 'https://cdn.freebiesupply.com/logos/large/2x/kia-logo-png-transparent.png' },
+  { name: 'BMW', logo: 'https://cdn.freebiesupply.com/logos/large/2x/bmw-logo-png-transparent.png' },
+  { name: 'Mercedes-Benz', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mercedes-benz-logo-png-transparent.png' },
+  { name: 'Audi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/audi-logo-png-transparent.png' },
+  { name: 'Volkswagen', logo: 'https://cdn.freebiesupply.com/logos/large/2x/volkswagen-logo-png-transparent.png' }
 ];
 
 const insertManufacturer = db.prepare('INSERT OR IGNORE INTO manufacturers (name, logo) VALUES (?, ?)');
@@ -809,6 +809,56 @@ app.get('/api/products/:productId/manufacturers', (req, res) => {
       }
     }
   );
+});
+
+// TEMPORARY: Fix broken logo URLs
+app.post('/api/fix-manufacturer-logos', (req, res) => {
+  console.log('🔄 Updating manufacturer logos...');
+  
+  const manufacturers = [
+    { name: 'Toyota', logo: 'https://cdn.freebiesupply.com/logos/large/2x/toyota-logo-png-transparent.png' },
+    { name: 'Honda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/honda-logo-png-transparent.png' },
+    { name: 'Mitsubishi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mitsubishi-logo-png-transparent.png' },
+    { name: 'Nissan', logo: 'https://cdn.freebiesupply.com/logos/large/2x/nissan-6-logo-png-transparent.png' },
+    { name: 'Mazda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mazda-logo-png-transparent.png' },
+    { name: 'Suzuki', logo: 'https://cdn.freebiesupply.com/logos/large/2x/suzuki-logo-png-transparent.png' },
+    { name: 'Isuzu', logo: 'https://cdn.freebiesupply.com/logos/large/2x/isuzu-logo-png-transparent.png' },
+    { name: 'Ford', logo: 'https://cdn.freebiesupply.com/logos/large/2x/ford-logo-png-transparent.png' },
+    { name: 'Chevrolet', logo: 'https://cdn.freebiesupply.com/logos/large/2x/chevrolet-logo-png-transparent.png' },
+    { name: 'Hyundai', logo: 'https://cdn.freebiesupply.com/logos/large/2x/hyundai-logo-png-transparent.png' },
+    { name: 'Kia', logo: 'https://cdn.freebiesupply.com/logos/large/2x/kia-logo-png-transparent.png' },
+    { name: 'BMW', logo: 'https://cdn.freebiesupply.com/logos/large/2x/bmw-logo-png-transparent.png' },
+    { name: 'Mercedes-Benz', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mercedes-benz-logo-png-transparent.png' },
+    { name: 'Audi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/audi-logo-png-transparent.png' },
+    { name: 'Volkswagen', logo: 'https://cdn.freebiesupply.com/logos/large/2x/volkswagen-logo-png-transparent.png' }
+  ];
+  
+  let updated = 0;
+  const stmt = db.prepare('UPDATE manufacturers SET logo = ? WHERE name = ?');
+  
+  manufacturers.forEach(m => {
+    stmt.run(m.logo, m.name, function(err) {
+      if (err) {
+        console.error(`Error updating ${m.name}:`, err);
+      } else if (this.changes > 0) {
+        updated++;
+        console.log(`✓ Updated ${m.name} logo`);
+      }
+    });
+  });
+  
+  stmt.finalize((err) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      console.log(`✅ Updated ${updated} manufacturer logos`);
+      res.json({ 
+        success: true, 
+        message: `Updated ${updated} manufacturer logos`,
+        updated: updated
+      });
+    }
+  });
 });
 
 // Get all orders (Admin)
