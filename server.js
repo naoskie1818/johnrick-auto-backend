@@ -383,13 +383,13 @@ const defaultManufacturers = [
   { name: 'Mazda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mazda-logo-png-transparent.png' },
   { name: 'Suzuki', logo: 'https://cdn.freebiesupply.com/logos/large/2x/suzuki-logo-png-transparent.png' },
   { name: 'Isuzu', logo: 'https://cdn.freebiesupply.com/logos/large/2x/isuzu-logo-png-transparent.png' },
-  { name: 'Ford', logo: 'https://cdn.freebiesupply.com/logos/large/2x/ford-logo-png-transparent.png' },
+  { name: 'Ford', logo: 'https://logo.clearbit.com/ford.com' },
   { name: 'Chevrolet', logo: 'https://cdn.freebiesupply.com/logos/large/2x/chevrolet-logo-png-transparent.png' },
   { name: 'Hyundai', logo: 'https://cdn.freebiesupply.com/logos/large/2x/hyundai-logo-png-transparent.png' },
   { name: 'Kia', logo: 'https://cdn.freebiesupply.com/logos/large/2x/kia-logo-png-transparent.png' },
   { name: 'BMW', logo: 'https://cdn.freebiesupply.com/logos/large/2x/bmw-logo-png-transparent.png' },
   { name: 'Mercedes-Benz', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mercedes-benz-logo-png-transparent.png' },
-  { name: 'Audi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/audi-logo-png-transparent.png' },
+  { name: 'Audi', logo: 'https://logo.clearbit.com/audi.com' },
   { name: 'Volkswagen', logo: 'https://cdn.freebiesupply.com/logos/large/2x/volkswagen-logo-png-transparent.png' }
 ];
 
@@ -823,13 +823,13 @@ app.post('/api/fix-manufacturer-logos', (req, res) => {
     { name: 'Mazda', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mazda-logo-png-transparent.png' },
     { name: 'Suzuki', logo: 'https://cdn.freebiesupply.com/logos/large/2x/suzuki-logo-png-transparent.png' },
     { name: 'Isuzu', logo: 'https://cdn.freebiesupply.com/logos/large/2x/isuzu-logo-png-transparent.png' },
-    { name: 'Ford', logo: 'https://cdn.freebiesupply.com/logos/large/2x/ford-logo-png-transparent.png' },
+    { name: 'Ford', logo: 'https://logo.clearbit.com/ford.com' },
     { name: 'Chevrolet', logo: 'https://cdn.freebiesupply.com/logos/large/2x/chevrolet-logo-png-transparent.png' },
     { name: 'Hyundai', logo: 'https://cdn.freebiesupply.com/logos/large/2x/hyundai-logo-png-transparent.png' },
     { name: 'Kia', logo: 'https://cdn.freebiesupply.com/logos/large/2x/kia-logo-png-transparent.png' },
     { name: 'BMW', logo: 'https://cdn.freebiesupply.com/logos/large/2x/bmw-logo-png-transparent.png' },
     { name: 'Mercedes-Benz', logo: 'https://cdn.freebiesupply.com/logos/large/2x/mercedes-benz-logo-png-transparent.png' },
-    { name: 'Audi', logo: 'https://cdn.freebiesupply.com/logos/large/2x/audi-logo-png-transparent.png' },
+    { name: 'Audi', logo: 'https://logo.clearbit.com/audi.com' },
     { name: 'Volkswagen', logo: 'https://cdn.freebiesupply.com/logos/large/2x/volkswagen-logo-png-transparent.png' }
   ];
   
