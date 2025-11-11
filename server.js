@@ -352,6 +352,42 @@ function initDatabase() {
       else console.log('Customers table ready');
     });
 
+    // Create manufacturers table
+    db.run(`CREATE TABLE IF NOT EXISTS manufacturers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT UNIQUE NOT NULL,
+      logo TEXT
+    )`, (err) => {
+      if (err) console.error('Error creating manufacturers table:', err);
+      else console.log('Manufacturers table ready');
+    });
+
+    // Create product_manufacturers junction table (many-to-many relationship)
+    db.run(`CREATE TABLE IF NOT EXISTS product_manufacturers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER,
+      manufacturer_id INTEGER,
+      FOREIGN KEY (product_id) REFERENCES products(id),
+      FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id)
+    )`, (err) => {
+      if (err) console.error('Error creating product_manufacturers table:', err);
+      else console.log('Product-Manufacturers table ready');
+    });
+
+    // Insert default manufacturers
+    const defaultManufacturers = [
+      'Toyota', 'Honda', 'Mitsubishi', 'Nissan', 'Mazda',
+      'Suzuki', 'Isuzu', 'Ford', 'Chevrolet', 'Hyundai',
+      'Kia', 'BMW', 'Mercedes-Benz', 'Audi', 'Volkswagen'
+    ];
+
+    const insertManufacturer = db.prepare('INSERT OR IGNORE INTO manufacturers (name) VALUES (?)');
+    defaultManufacturers.forEach(manufacturer => {
+      insertManufacturer.run(manufacturer);
+    });
+    insertManufacturer.finalize();
+    console.log('Default manufacturers added');
+
     // Insert default admin user (password: admin)
     db.run(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`, (err) => {
       if (err) console.error('Error inserting admin user:', err);
@@ -650,6 +686,114 @@ app.post('/api/orders', (req, res) => {
             receiptData: orderDetails
           });
         });
+      }
+    }
+  );
+});
+
+// ========================================
+// MANUFACTURER ENDPOINTS
+// ========================================
+
+// Get all manufacturers
+app.get('/api/manufacturers', (req, res) => {
+  db.all('SELECT * FROM manufacturers ORDER BY name', (err, rows) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.json(rows);
+    }
+  });
+});
+
+// Add manufacturer (Admin)
+app.post('/api/manufacturers', (req, res) => {
+  const { name, logo } = req.body;
+  
+  db.run(
+    'INSERT INTO manufacturers (name, logo) VALUES (?, ?)',
+    [name, logo || null],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ id: this.lastID, name, logo });
+      }
+    }
+  );
+});
+
+// Get products by manufacturer
+app.get('/api/manufacturers/:id/products', (req, res) => {
+  const { id } = req.params;
+  
+  db.all(
+    `SELECT p.*, c.name as category_name
+     FROM products p
+     LEFT JOIN categories c ON p.category_id = c.id
+     INNER JOIN product_manufacturers pm ON p.id = pm.product_id
+     WHERE pm.manufacturer_id = ?
+     ORDER BY p.name`,
+    [id],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json(rows);
+      }
+    }
+  );
+});
+
+// Assign manufacturer to product
+app.post('/api/products/:productId/manufacturers', (req, res) => {
+  const { productId } = req.params;
+  const { manufacturer_id } = req.body;
+  
+  db.run(
+    'INSERT INTO product_manufacturers (product_id, manufacturer_id) VALUES (?, ?)',
+    [productId, manufacturer_id],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ success: true });
+      }
+    }
+  );
+});
+
+// Remove manufacturer from product
+app.delete('/api/products/:productId/manufacturers/:manufacturerId', (req, res) => {
+  const { productId, manufacturerId } = req.params;
+  
+  db.run(
+    'DELETE FROM product_manufacturers WHERE product_id = ? AND manufacturer_id = ?',
+    [productId, manufacturerId],
+    function(err) {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json({ success: true });
+      }
+    }
+  );
+});
+
+// Get manufacturers for a specific product
+app.get('/api/products/:productId/manufacturers', (req, res) => {
+  const { productId } = req.params;
+  
+  db.all(
+    `SELECT m.* FROM manufacturers m
+     INNER JOIN product_manufacturers pm ON m.id = pm.manufacturer_id
+     WHERE pm.product_id = ?`,
+    [productId],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json(rows);
       }
     }
   );
