@@ -174,3 +174,29 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html'))
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
+// Manufacturers API
+app.get('/api/manufacturers', (req, res) => {
+  try {
+    const manufacturers = db.prepare("SELECT * FROM manufacturers ORDER BY name").all();
+    res.json(manufacturers);
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
+
+// Seed some default manufacturers if the table is empty
+function seedManufacturers() {
+  const count = db.prepare("SELECT COUNT(*) as count FROM manufacturers").get().count;
+  if (count === 0) {
+    const insert = db.prepare("INSERT INTO manufacturers (name, logo) VALUES (?, ?)");
+    const defaults = [
+      ['Toyota', 'https://via.placeholder.com/100?text=Toyota'],
+      ['Honda', 'https://via.placeholder.com/100?text=Honda'],
+      ['Mitsubishi', 'https://via.placeholder.com/100?text=Mitsubishi']
+    ];
+    for (const m of defaults) insert.run(m[0], m[1]);
+    console.log('✅ Default manufacturers seeded');
+  }
+}
+seedManufacturers();
