@@ -154,28 +154,31 @@ app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
+// FIXED: Added product update (PUT) route
+app.put('/api/products/:id', (req, res) => {
+  const { name, price, stock, image, category_id } = req.body;
+  const { id } = req.params;
+  try {
+    const info = db.prepare('UPDATE products SET name = ?, price = ?, stock = ?, image = ?, category_id = ? WHERE id = ?')
+                  .run(name, price, stock, image, category_id, id);
+    if (info.changes > 0) res.json({ success: true, message: 'Product updated' });
+    else res.status(404).json({ success: false, message: 'Product not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// FIXED: Added product delete route
+app.delete('/api/products/:id', (req, res) => {
+    const { id } = req.params;
+    try {
+        db.prepare('DELETE FROM products WHERE id = ?').run(id);
+        res.json({ success: true, message: 'Product deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/products', (req, res) => {
   const { name, price, stock, image, category_id } = req.body;
-  const info = db.prepare('INSERT INTO products (name, price, stock, image, category_id) VALUES (?, ?, ?, ?, ?)').run(name, price, stock, image, category_id);
-  res.json({ id: info.lastInsertRowid });
-});
-
-app.post('/api/orders', (req, res) => {
-  const { customer_name, customer_email, customer_address, payment_method, items, total_amount } = req.body;
-  const orderInfo = db.prepare(`INSERT INTO orders (customer_name, customer_email, customer_address, payment_method, total_amount) VALUES (?, ?, ?, ?, ?)`).run(customer_name, customer_email, customer_address, payment_method, total_amount);
-  const orderId = orderInfo.lastInsertRowid;
-
-  const insertItem = db.prepare(`INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)`);
-  items.forEach(item => insertItem.run(orderId, item.id || null, item.name, item.price, item.quantity || 1));
-  
-  res.status(201).json({ success: true, orderId });
-});
-
-app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
-  const user = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?').get(username, password);
-  if (user) res.json({ success: true, user });
-  else res.status(401).json({ success: false, message: 'Invalid credentials' });
-});
-
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+  const info = db.prepare('
