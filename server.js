@@ -95,6 +95,19 @@ function initDatabase() {
 }
 initDatabase();
 
+function seedCategories() {
+  const count = db.prepare("SELECT COUNT(*) as count FROM categories").get().count;
+  if (count === 0) {
+    const insert = db.prepare("INSERT INTO categories (name) VALUES (?)");
+    ['Accessories', 'Tires', 'Engine Parts', 'Interior', 'Exterior'].forEach(cat => {
+      insert.run(cat);
+    });
+    console.log('✅ Categories seeded');
+  }
+}
+
+seedCategories();
+
 // ========== API ROUTES ==========
 
 app.get('/api/health', (req, res) => res.json({ status: 'healthy' }));
@@ -220,6 +233,30 @@ app.get('/manufacturers/:id/products', (req, res) => {
     `).all(manufacturerId);
     
     res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Categories API
+app.get('/api/categories', (req, res) => {
+  try {
+    const categories = db.prepare("SELECT * FROM categories ORDER BY name").all();
+    res.json(categories);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Customers API (Fetches unique customers from orders)
+app.get('/api/customers', (req, res) => {
+  try {
+    const customers = db.prepare(`
+      SELECT DISTINCT customer_name, customer_email, customer_address 
+      FROM orders 
+      ORDER BY customer_name ASC
+    `).all();
+    res.json(customers);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
