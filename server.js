@@ -94,6 +94,8 @@ function initDatabase() {
   }
 }
 initDatabase();
+seedCategories();
+seedManufacturers();
 
 function seedCategories() {
   try {
@@ -122,12 +124,16 @@ function seedManufacturers() {
     console.log('✅ Manufacturers check/seeding complete');
   } catch (err) {
     console.error('❌ Manufacturers Seeding error:', err);
+    // Add this to see if the table actually exists
+    try {
+        db.prepare(`CREATE TABLE IF NOT EXISTS manufacturers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE
+        )`).run();
+        console.log("🛠️ Created manufacturers table manually");
+    } catch(e) { console.error("Table create failed", e); }
   }
 }
-
-seedCategories();
-seedManufacturers();
-
 
 // ========== API ROUTES ==========
 
