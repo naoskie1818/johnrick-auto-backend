@@ -112,6 +112,23 @@ function seedCategories() {
 
 seedCategories();
 
+function seedManufacturers() {
+  try {
+    const insert = db.prepare("INSERT OR IGNORE INTO manufacturers (name) VALUES (?)");
+    const brands = ['Audi', 'BMW', 'Chevrolet', 'Ford', 'Honda', 'Hyundai', 'Isuzu', 'Kia', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Suzuki', 'Toyota', 'Volkswagen'];
+    
+    brands.forEach(brand => {
+      insert.run(brand);
+    });
+    
+    console.log('✅ Manufacturers check/seeding complete');
+  } catch (err) {
+    console.error('❌ Manufacturers Seeding error:', err);
+  }
+}
+
+seedManufacturers();
+
 // ========== API ROUTES ==========
 
 app.get('/api/health', (req, res) => res.json({ status: 'healthy' }));
@@ -138,6 +155,7 @@ app.get('/manufacturers', (req, res) => {
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
+
 
 app.get('/api/products', (req, res) => {
   try {
@@ -276,6 +294,15 @@ app.get('/api/customers', (req, res) => {
       ORDER BY customer_name ASC
     `).all();
     res.json(customers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/manufacturers', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
