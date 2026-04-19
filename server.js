@@ -317,10 +317,19 @@ function initDatabase() {
       else console.log('Orders table ready');
     });
 
-    // Create order_items table
+    /* Create order_items table
     db.run(`CREATE TABLE IF NOT EXISTS order_items (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       order_id INTEGER,
+      product_name TEXT,
+      price REAL,
+      quantity INTEGER,
+      FOREIGN KEY (order_id) REFERENCES orders(id)*/ //repaced below
+
+      db.run(`CREATE TABLE IF NOT EXISTS order_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      order_id INTEGER,
+      product_id INTEGER,
       product_name TEXT,
       price REAL,
       quantity INTEGER,
@@ -328,7 +337,9 @@ function initDatabase() {
     )`, (err) => {
       if (err) console.error('Error creating order_items table:', err);
       else console.log('Order items table ready');
-    });
+    }); 
+
+    
 
     // Create users table
     db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -690,10 +701,15 @@ app.post('/api/orders', (req, res) => {
         console.log('Order created with ID:', orderId);
         
         // Insert order items with quantities
-        const stmt = db.prepare('INSERT INTO order_items (order_id, product_name, price, quantity) VALUES (?, ?, ?, ?)');
+        /*const stmt = db.prepare('INSERT INTO order_items (order_id, product_name, price, quantity) VALUES (?, ?, ?, ?)');
         items.forEach(item => {
           const quantity = item.quantity || 1;
-          stmt.run(orderId, item.name, item.price, quantity, (err) => {
+          stmt.run(orderId, item.name, item.price, quantity, (err) => { */ //replaced below code
+
+          const stmt = db.prepare('INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)');
+          items.forEach(item => {
+            const quantity = item.quantity || 1;
+            stmt.run(orderId, item.id || item.product_id || null, item.name, item.price, quantity, (err) => {
             if (err) console.error('Error inserting order item:', err);
           });
         });
@@ -837,6 +853,22 @@ app.get('/api/products/:productId/manufacturers', (req, res) => {
      INNER JOIN product_manufacturers pm ON m.id = pm.manufacturer_id
      WHERE pm.product_id = ?`,
     [productId],
+    (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message });
+      } else {
+        res.json(rows);
+      }
+    }
+  );
+});
+
+// Get items for a specific order
+app.get('/api/orders/:orderId/items', (req, res) => {
+  const { orderId } = req.params;
+  db.all(
+    'SELECT * FROM order_items WHERE order_id = ?',
+    [orderId],
     (err, rows) => {
       if (err) {
         res.status(500).json({ error: err.message });
