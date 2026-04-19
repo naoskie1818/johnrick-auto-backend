@@ -124,6 +124,21 @@ app.get('/api/categories', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Fallback routes (in case frontend omits /api)
+app.get('/categories', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM categories ORDER BY name').all();
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/manufacturers', (req, res) => {
+  try {
+    const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 app.get('/api/products', (req, res) => {
   try {
     const products = db.prepare("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id").all();
