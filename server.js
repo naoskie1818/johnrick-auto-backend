@@ -176,7 +176,7 @@ app.listen(PORT, () => {
 });
 
 // Manufacturers API
-app.get('/api/manufacturers', (req, res) => {
+app.get('/manufacturers', (req, res) => {
   try {
     const manufacturers = db.prepare("SELECT * FROM manufacturers ORDER BY name").all();
     res.json(manufacturers);
@@ -191,12 +191,13 @@ function seedManufacturers() {
   if (count === 0) {
     const insert = db.prepare("INSERT INTO manufacturers (name, logo) VALUES (?, ?)");
     const defaults = [
-      ['Toyota', 'https://via.placeholder.com/100?text=Toyota'],
-      ['Honda', 'https://via.placeholder.com/100?text=Honda'],
-      ['Mitsubishi', 'https://via.placeholder.com/100?text=Mitsubishi']
+      ['Toyota', 'https://logo.clearbit.com/toyota.com'],
+      ['Honda', 'https://logo.clearbit.com/honda.com'],
+      ['Mitsubishi', 'https://logo.clearbit.com/mitsubishi-motors.com'],
+      ['Suzuki', 'https://logo.clearbit.com/suzuki.com'],
+      ['Isuzu', 'https://logo.clearbit.com/isuzu.com']
     ];
     for (const m of defaults) insert.run(m[0], m[1]);
-    console.log('✅ Default manufacturers seeded');
   }
 }
 seedManufacturers();
