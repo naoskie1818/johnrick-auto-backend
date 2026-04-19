@@ -193,6 +193,19 @@ app.delete('/api/products/:id', (req, res) => {
     }
 });
 
+// POST: Create a new product
 app.post('/api/products', (req, res) => {
   const { name, price, stock, image, category_id } = req.body;
-  const info = db.prepare('
+  try {
+    const info = db.prepare('INSERT INTO products (name, price, stock, image, category_id) VALUES (?, ?, ?, ?, ?)')
+                   .run(name, price, stock, image, category_id);
+    res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
