@@ -55,11 +55,12 @@ function initDatabase() {
     db.prepare(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL, image TEXT, category_id INTEGER, FOREIGN KEY (category_id) REFERENCES categories(id))`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, customer_name TEXT NOT NULL, customer_email TEXT NOT NULL, customer_address TEXT NOT NULL, payment_method TEXT NOT NULL, total_amount REAL NOT NULL, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, received_at TEXT)`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER, product_id INTEGER, product_name TEXT, price REAL, quantity INTEGER, FOREIGN KEY (order_id) REFERENCES orders(id))`).run();
-    db.prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT DEFAULT 'admin')`).run();
+    db.prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, full_name TEXT, email TEXT UNIQUE NOT NULL, phone TEXT, address TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'customer')`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS manufacturers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, logo TEXT)`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, customer_name TEXT, rating INTEGER, comment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
     
-    db.prepare(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`).run();
+    // Seed Admin
+    db.prepare(`INSERT OR IGNORE INTO users (email, password, role) VALUES ('admin', 'admin', 'admin')`).run();
     console.log('✅ Database Tables Ready');
   } catch (err) {
     console.error('❌ Init DB Error:', err);
@@ -77,7 +78,8 @@ function seedCategories() {
 function seedManufacturers() {
   try {
     const insert = db.prepare("INSERT OR IGNORE INTO manufacturers (name) VALUES (?)");
-    ['Audi', 'BMW', 'Chevrolet', 'Ford', 'Honda', 'Hyundai', 'Isuzu', 'Kia', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Suzuki', 'Toyota', 'Volkswagen'].forEach(brand => insert.run(brand));
+    const brands = ['Audi', 'BMW', 'Chevrolet', 'Ford', 'Honda', 'Hyundai', 'Isuzu', 'Kia', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Suzuki', 'Toyota', 'Volkswagen'];
+    brands.forEach(brand => insert.run(brand));
     console.log('✅ Manufacturers check/seeding complete');
   } catch (err) { console.error('❌ Manufacturers Seeding error:', err); }
 }
@@ -87,66 +89,47 @@ seedCategories();
 seedManufacturers();
 
 // ==========================================
-// CONTROLLERS
+// API ROUTES
 // ==========================================
 
-const getCategories = (req, res) => {
-  const rows = db.prepare('SELECT * FROM categories ORDER BY name').all();
-  res.json(rows);
-};
+// Dashboard: Top Selling Products
+app.get(['/api/orders/top-products', '/orders/top-products'], (req, res) => {
+  try {
+    const rows = db.prepare(`SELECT product_name as name, SUM(quantity) as total_sold FROM order_items GROUP BY product_id ORDER BY total_sold DESC LIMIT 5`).all();
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
 
-const getManufacturers = (req, res) => {
-  const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
-  res.json(rows);
-};
+// Customer Signup
+app.post(['/api/customers/signup', '/customers/signup'], (req, res) => {
+  const { name, email, phone, address, password } = req.body;
+  try {
+    const info = db.prepare(`INSERT INTO users (full_name, email, phone, address, password, role) VALUES (?, ?, ?, ?, ?, 'customer')`).run(name, email, phone, address, password);
+    res.status(201).json({ success: true, userId: info.lastInsertRowid });
+  } catch (err) { res.status(400).json({ error: err.message }); }
+});
 
-const getOrders = (req, res) => {
-  const rows = db.prepare(`
-    SELECT o.*, GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items_summary
-    FROM orders o
-    LEFT JOIN order_items oi ON o.id = oi.order_id
-    GROUP BY o.id ORDER BY o.id DESC
-  `).all();
-  res.json(rows);
-};
+// Categories & Manufacturers
+const getCategories = (req, res) => res.json(db.prepare('SELECT * FROM categories ORDER BY name').all());
+const getManufacturers = (req, res) => res.json(db.prepare('SELECT * FROM manufacturers ORDER BY name').all());
+app.get(['/api/categories', '/categories'], getCategories);
+app.get(['/api/manufacturers', '/manufacturers'], getManufacturers);
 
-const getCustomers = (req, res) => {
+// Orders & Customers
+app.get(['/api/orders', '/orders'], (req, res) => {
+  const rows = db.prepare(`SELECT o.*, GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items_summary FROM orders o LEFT JOIN order_items oi ON o.id = oi.order_id GROUP BY o.id ORDER BY o.id DESC`).all();
+  res.json(rows);
+});
+
+app.get(['/api/customers', '/customers'], (req, res) => {
   const customers = db.prepare(`SELECT DISTINCT customer_name, customer_email, customer_address FROM orders ORDER BY customer_name ASC`).all();
   res.json(customers);
-};
-
-const getReviews = (req, res) => {
-  const reviews = db.prepare(`SELECT * FROM reviews ORDER BY created_at DESC`).all();
-  res.json(reviews);
-};
-
-// ==========================================
-// ROUTES
-// ==========================================
-
-// Health & Index
-app.get('/', (req, res) => res.json({ message: 'Johnrick Auto Supply API Running' }));
-app.get('/api/health', (req, res) => res.json({ status: 'healthy' }));
-
-// Categories
-app.get('/api/categories', getCategories);
-app.get('/categories', getCategories);
-
-// Manufacturers
-app.get('/api/manufacturers', getManufacturers);
-app.get('/manufacturers', getManufacturers);
-
-// Orders
-app.get('/api/orders', getOrders);
-app.get('/orders', getOrders);
-
-// Customers
-app.get('/api/customers', getCustomers);
-app.get('/customers', getCustomers);
+});
 
 // Reviews
-app.get('/api/reviews', getReviews);
-app.get('/reviews', getReviews);
+app.get(['/api/reviews', '/reviews'], (req, res) => {
+  res.json(db.prepare(`SELECT * FROM reviews ORDER BY created_at DESC`).all());
+});
 
 // Products
 app.get('/api/products', (req, res) => {
@@ -160,22 +143,14 @@ app.post('/api/products', (req, res) => {
   res.json({ id: info.lastInsertRowid });
 });
 
-app.post('/api/orders', (req, res) => {
-  const { customer_name, customer_email, customer_address, payment_method, items, total_amount } = req.body;
-  const orderInfo = db.prepare(`INSERT INTO orders (customer_name, customer_email, customer_address, payment_method, total_amount) VALUES (?, ?, ?, ?, ?)`).run(customer_name, customer_email, customer_address, payment_method, total_amount);
-  const orderId = orderInfo.lastInsertRowid;
-
-  const insertItem = db.prepare(`INSERT INTO order_items (order_id, product_id, product_name, price, quantity) VALUES (?, ?, ?, ?, ?)`);
-  items.forEach(item => insertItem.run(orderId, item.id || null, item.name, item.price, item.quantity || 1));
-  
-  res.status(201).json({ success: true, orderId });
-});
-
+// Admin Login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  const user = db.prepare('SELECT * FROM users WHERE username = ? AND password = ?').get(username, password);
+  const user = db.prepare('SELECT * FROM users WHERE (email = ? OR username = ?) AND password = ?').get(username, username, password);
   if (user) res.json({ success: true, user });
   else res.status(401).json({ success: false, message: 'Invalid credentials' });
 });
+
+app.get('/', (req, res) => res.json({ message: 'Johnrick Auto Supply API Running' }));
 
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
