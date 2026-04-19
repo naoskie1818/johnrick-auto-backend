@@ -82,6 +82,15 @@ function seedManufacturers() {
   } catch (err) { console.error('❌ Manufacturers Seeding error:', err); }
 }
 
+function seedReviews() {
+  const count = db.prepare("SELECT COUNT(*) as count FROM reviews").get();
+  if (count.count === 0) {
+    const insert = db.prepare("INSERT INTO reviews (customer_name, rating, comment) VALUES (?, ?, ?)");
+    insert.run('Test User', 5, 'Great service!');
+    console.log('✅ Review seeded for testing');
+  }
+}
+
 initDatabase();
 seedCategories();
 seedManufacturers();
@@ -116,8 +125,13 @@ const getCustomers = (req, res) => {
 };
 
 const getReviews = (req, res) => {
-  const reviews = db.prepare(`SELECT * FROM reviews ORDER BY created_at DESC`).all();
-  res.json(reviews);
+  try {
+    const reviews = db.prepare(`SELECT * FROM reviews ORDER BY created_at DESC`).all();
+    res.json(reviews || []); // Ensure it returns at least an empty list
+  } catch (error) {
+    console.error("Database Error:", error);
+    res.status(500).json({ error: "Failed to fetch reviews" });
+  }
 };
 
 // ==========================================
