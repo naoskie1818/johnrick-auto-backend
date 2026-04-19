@@ -110,8 +110,6 @@ function seedCategories() {
   }
 }
 
-seedCategories();
-
 function seedManufacturers() {
   try {
     const insert = db.prepare("INSERT OR IGNORE INTO manufacturers (name) VALUES (?)");
@@ -127,7 +125,9 @@ function seedManufacturers() {
   }
 }
 
+seedCategories();
 seedManufacturers();
+
 
 // ========== API ROUTES ==========
 
@@ -299,11 +299,14 @@ app.get('/api/customers', (req, res) => {
   }
 });
 
+// Standard Route
 app.get('/api/manufacturers', (req, res) => {
-  try {
-    const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
-    res.json(rows);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+  const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
+  res.json(rows);
+});
+
+// Fallback Route (Safe to have both)
+app.get('/manufacturers', (req, res) => {
+  const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
+  res.json(rows);
 });
