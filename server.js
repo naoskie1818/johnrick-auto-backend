@@ -189,15 +189,38 @@ app.get('/manufacturers', (req, res) => {
 function seedManufacturers() {
   const count = db.prepare("SELECT COUNT(*) as count FROM manufacturers").get().count;
   if (count === 0) {
-    const insert = db.prepare("INSERT INTO manufacturers (name, logo) VALUES (?, ?)");
-    const defaults = [
-      ['Toyota', 'https://logo.clearbit.com/toyota.com'],
-      ['Honda', 'https://logo.clearbit.com/honda.com'],
-      ['Mitsubishi', 'https://logo.clearbit.com/mitsubishi-motors.com'],
-      ['Suzuki', 'https://logo.clearbit.com/suzuki.com'],
-      ['Isuzu', 'https://logo.clearbit.com/isuzu.com']
-    ];
-    for (const m of defaults) insert.run(m[0], m[1]);
+    const insertM = db.prepare("INSERT INTO manufacturers (name, logo) VALUES (?, ?)");
+    const insertPM = db.prepare("INSERT INTO product_manufacturers (product_id, manufacturer_id) VALUES (?, ?)");
+
+    // 1. Insert Manufacturers
+    const toyota = insertM.run('Toyota', 'https://logo.clearbit.com/toyota.com').lastInsertRowid;
+    const honda = insertM.run('Honda', 'https://logo.clearbit.com/honda.com').lastInsertRowid;
+    const bmw = insertM.run('BMW', 'https://logo.clearbit.com/bmw.com').lastInsertRowid;
+
+    // 2. Link existing sample products (assuming IDs 1, 2, 3 exist)
+    // Example: Link product 1 to BMW, product 2 to Toyota
+    insertPM.run(1, bmw); 
+    insertPM.run(2, toyota);
+    
+    console.log('✅ Manufacturers and links seeded');
   }
 }
 seedManufacturers();
+
+// Get products by manufacturer ID
+app.get('/manufacturers/:id/products', (req, res) => {
+  const manufacturerId = req.params.id;
+  try {
+    const products = db.prepare(`
+      SELECT p.*, c.name as category_name 
+      FROM products p 
+      JOIN product_manufacturers pm ON p.id = pm.product_id 
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE pm.manufacturer_id = ?
+    `).all(manufacturerId);
+    
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
