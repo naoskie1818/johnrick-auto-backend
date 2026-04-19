@@ -96,13 +96,17 @@ function initDatabase() {
 initDatabase();
 
 function seedCategories() {
-  const count = db.prepare("SELECT COUNT(*) as count FROM categories").get().count;
-  if (count === 0) {
-    const insert = db.prepare("INSERT INTO categories (name) VALUES (?)");
-    ['Accessories', 'Tires', 'Engine Parts', 'Interior', 'Exterior'].forEach(cat => {
+  try {
+    const insert = db.prepare("INSERT OR IGNORE INTO categories (name) VALUES (?)");
+    const categoryList = ['Accessories', 'Tires', 'Engine Parts', 'Interior', 'Exterior'];
+    
+    categoryList.forEach(cat => {
       insert.run(cat);
     });
-    console.log('✅ Categories seeded');
+    
+    console.log('✅ Categories check/seeding complete');
+  } catch (err) {
+    console.error('❌ Seeding error:', err);
   }
 }
 
