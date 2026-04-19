@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
@@ -204,75 +204,61 @@ app.get('/login.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Initialize SQLite Database
-const db = new sqlite3.Database('./johnrick_auto.db', (err) => {
-  if (err) {
-    console.error('Error opening database:', err);
-  } else {
-    console.log('Connected to SQLite database');
-    initDatabase();
+// Initialize SQLite Database with better-sqlite3
+const db = new Database('./johnrick_auto.db');
+
+console.log('Connected to SQLite database');
+initDatabase();
     
      // ========================================
     // AUTO-FIX: Ensure orders table has correct schema
     // ========================================
-    setTimeout(() => {
-      db.all("PRAGMA table_info(orders)", (err, columns) => {
-        if (err) {
-          console.error('Error checking orders schema:', err);
-          return;
-        }
-        
+setTimeout(() => {
+    try {
+        // Use .prepare().all() to get data immediately
+        const columns = db.prepare("PRAGMA table_info(orders)").all();
+
         if (!columns || columns.length === 0) {
-          console.log('⚠️ Orders table does not exist yet');
-          return;
+            console.log('⚠️ Orders table does not exist yet');
+            return;
         }
-        
+
         const hasOldEmail = columns.some(col => col.name === 'email');
         const hasOldAddress = columns.some(col => col.name === 'address');
         const hasOldTotal = columns.some(col => col.name === 'total');
-        
+
         console.log('📊 Orders table columns:', columns.map(c => c.name).join(', '));
-        
+
         // If ANY old columns exist, recreate the table
         if (hasOldEmail || hasOldAddress || hasOldTotal) {
-          console.log('⚠️ Old schema columns detected! Recreating orders table...');
-          
-          // Drop old table
-          db.run('DROP TABLE IF EXISTS orders', (err) => {
-            if (err) {
-              console.error('❌ Error dropping orders table:', err);
-              return;
-            }
-            
-            console.log('✓ Old orders table dropped');
-            
-            // Create new table with correct schema ONLY
-            db.run(`CREATE TABLE orders (
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              customer_id INTEGER,
-              customer_name TEXT NOT NULL,
-              customer_email TEXT NOT NULL,
-              customer_address TEXT NOT NULL,
-              payment_method TEXT NOT NULL,
-              total_amount REAL NOT NULL,
-              status TEXT DEFAULT 'Pending',
-              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-              received_at TEXT
-            )`, (err) => {
-              if (err) {
-                console.error('❌ Error creating new orders table:', err);
-              } else {
-                console.log('✅ Orders table recreated with ONLY new schema columns');
-              }
-            });
-          });
+            console.log('⚠️ Old schema columns detected! Recreating orders table...');
+
+            // Drop old table - just .run() it directly
+            db.prepare('DROP TABLE IF EXISTS orders').run();
+            console.log('✅ Old orders table dropped');
+
+            // Create new table
+            db.prepare(`CREATE TABLE orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_id INTEGER,
+                customer_name TEXT NOT NULL,
+                customer_email TEXT NOT NULL,
+                customer_address TEXT NOT NULL,
+                payment_method TEXT NOT NULL,
+                total_amount REAL NOT NULL,
+                status TEXT DEFAULT 'Pending',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                received_at TEXT
+            )`).run();
+
+            console.log('✅ Orders table recreated with ONLY new schema columns');
         } else {
-          console.log('✅ Orders table schema is correct (no old columns)');
+            console.log('✅ Orders table schema is correct (no old columns)');
         }
-      });
-    }, 1000); // Wait 1 second for initDatabase to finish
-  }
-});
+    } catch (err) {
+        console.error('❌ Error updating orders table schema:', err);
+    }
+}, 1000);
 
 // Create tables
 function initDatabase() {
