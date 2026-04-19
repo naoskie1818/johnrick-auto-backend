@@ -100,7 +100,7 @@ seedManufacturers();
 
 async function sendOrderConfirmationEmail(orderDetails) {
   if (!mailTransporter) return { success: false, message: 'Email not configured' };
-  const { orderId, customer_name, email, total, items } = orderDetails;
+  const { orderId, customer_name, email, total } = orderDetails;
   
   const mailOptions = {
     from: `"Johnrick Auto Supply" <${EMAIL_CONFIG.auth.user}>`,
@@ -118,30 +118,63 @@ async function sendOrderConfirmationEmail(orderDetails) {
 }
 
 // ==========================================
-// API ROUTES
+// API ROUTES (Logic Controllers)
 // ==========================================
 
-app.get('/api/health', (req, res) => res.json({ status: 'healthy' }));
-
-// Categories (Standard & Fallback)
 const getCategories = (req, res) => {
   try {
     const rows = db.prepare('SELECT * FROM categories ORDER BY name').all();
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
-app.get('/api/categories', getCategories);
-app.get('/categories', getCategories);
 
-// Manufacturers (Standard & Fallback)
 const getManufacturers = (req, res) => {
   try {
     const rows = db.prepare('SELECT * FROM manufacturers ORDER BY name').all();
     res.json(rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
+
+const getOrders = (req, res) => {
+  try {
+    const rows = db.prepare(`
+      SELECT o.*, GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items_summary
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      GROUP BY o.id ORDER BY o.id DESC
+    `).all();
+    res.json(rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+const getCustomers = (req, res) => {
+  try {
+    const customers = db.prepare(`SELECT DISTINCT customer_name, customer_email, customer_address FROM orders ORDER BY customer_name ASC`).all();
+    res.json(customers);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+};
+
+// ==========================================
+// ENDPOINT MAPPING (Routes)
+// ==========================================
+
+app.get('/api/health', (req, res) => res.json({ status: 'healthy' }));
+
+// Categories
+app.get('/api/categories', getCategories);
+app.get('/categories', getCategories);
+
+// Manufacturers
 app.get('/api/manufacturers', getManufacturers);
 app.get('/manufacturers', getManufacturers);
+
+// Orders
+app.get('/api/orders', getOrders);
+app.get('/orders', getOrders);
+
+// Customers
+app.get('/api/customers', getCustomers);
+app.get('/customers', getCustomers);
 
 // Products
 app.get('/api/products', (req, res) => {
@@ -159,7 +192,6 @@ app.post('/api/products', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Orders
 app.post('/api/orders', (req, res) => {
   const { customer_id, customer_name, customer_email, customer_address, payment_method, items, total_amount } = req.body;
   try {
@@ -180,26 +212,6 @@ app.post('/api/orders', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-app.get('/api/orders', (req, res) => {
-  try {
-    const rows = db.prepare(`
-      SELECT o.*, GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items_summary
-      FROM orders o
-      LEFT JOIN order_items oi ON o.id = oi.order_id
-      GROUP BY o.id ORDER BY o.id DESC
-    `).all();
-    res.json(rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// Customers
-app.get('/api/customers', (req, res) => {
-  try {
-    const customers = db.prepare(`SELECT DISTINCT customer_name, customer_email, customer_address FROM orders ORDER BY customer_name ASC`).all();
-    res.json(customers);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
 // Admin Login
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
@@ -210,7 +222,7 @@ app.post('/api/login', (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// Static Routing
+// Static Routing & Fallback
 app.get('/', (req, res) => res.json({ message: 'Johnrick Auto Supply API Running' }));
 
 app.listen(PORT, () => {
