@@ -205,6 +205,37 @@ app.post('/api/products', (req, res) => {
   }
 });
 
+// POST: User Login
+    app.post('/api/customers/login', (req, res) => {
+    const { name, password } = req.body; // Changed username to name
+    try {
+        const user = db.prepare('SELECT * FROM users WHERE name = ? AND password = ?').get(name, password);
+        
+        if (user) {
+            res.json({ 
+                success: true, 
+                user: { id: user.id, name: user.name, email: user.email } 
+            });
+        } else {
+            res.status(401).json({ success: false, message: 'Invalid name or password' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+    // POST: User Signup
+    app.post('/api/signup', (req, res) => {
+    const { name, password, email } = req.body; // Changed username to name
+    try {
+        const info = db.prepare('INSERT INTO users (name, password, email) VALUES (?, ?, ?)')
+                       .run(name, password, email);
+        res.json({ success: true, id: info.lastInsertRowid });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
