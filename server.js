@@ -236,6 +236,26 @@ app.post('/api/products', (req, res) => {
     }
 });
 
+// TEMPORARY: Reset users table (call once, then remove)
+app.post('/api/reset-users', (req, res) => {
+  try {
+    db.prepare('DROP TABLE IF EXISTS users').run();
+    db.prepare(`CREATE TABLE users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE,
+      phone TEXT,
+      address TEXT,
+      password TEXT NOT NULL,
+      role TEXT DEFAULT 'customer'
+    )`).run();
+    db.prepare(`INSERT OR IGNORE INTO users (name, email, password, role) VALUES ('admin', 'admin@johnrick.com', 'admin', 'admin')`).run();
+    res.json({ success: true, message: 'Users table reset' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
