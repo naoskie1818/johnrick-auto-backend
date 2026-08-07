@@ -55,11 +55,11 @@ function initDatabase() {
     db.prepare(`CREATE TABLE IF NOT EXISTS products (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, price REAL NOT NULL, stock INTEGER NOT NULL, image TEXT, category_id INTEGER, FOREIGN KEY (category_id) REFERENCES categories(id))`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS orders (id INTEGER PRIMARY KEY AUTOINCREMENT, customer_id INTEGER, customer_name TEXT NOT NULL, customer_email TEXT NOT NULL, customer_address TEXT NOT NULL, payment_method TEXT NOT NULL, total_amount REAL NOT NULL, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP, received_at TEXT)`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS order_items (id INTEGER PRIMARY KEY AUTOINCREMENT, order_id INTEGER, product_id INTEGER, product_name TEXT, price REAL, quantity INTEGER, FOREIGN KEY (order_id) REFERENCES orders(id))`).run();
-    db.prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, password TEXT NOT NULL, role TEXT DEFAULT 'admin')`).run();
+    db.prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE, phone TEXT, address TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'customer')`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS manufacturers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, logo TEXT)`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, customer_name TEXT, rating INTEGER, comment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
     
-    db.prepare(`INSERT OR IGNORE INTO users (username, password, role) VALUES ('admin', 'admin', 'admin')`).run();
+    db.prepare(`INSERT OR IGNORE INTO users (name, email, password, role) VALUES ('admin', 'admin@johnrick.com', 'admin', 'admin')`).run();
     console.log('✅ Database Tables Ready');
   } catch (err) {
     console.error('❌ Init DB Error:', err);
@@ -225,11 +225,11 @@ app.post('/api/products', (req, res) => {
 });
 
     // POST: User Signup
-    app.post('/api/signup', (req, res) => {
-    const { name, password, email } = req.body; // Changed username to name
+    app.post('/api/customers/signup', (req, res) => {
+    const { name, email, phone, address, password } = req.body;
     try {
-        const info = db.prepare('INSERT INTO users (name, password, email) VALUES (?, ?, ?)')
-                       .run(name, password, email);
+        const info = db.prepare('INSERT INTO users (name, email, phone, address, password) VALUES (?, ?, ?, ?, ?)')
+                       .run(name, email, phone, address, password);
         res.json({ success: true, id: info.lastInsertRowid });
     } catch (err) {
         res.status(500).json({ error: err.message });
