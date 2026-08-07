@@ -177,6 +177,46 @@ app.get('/manufacturers', getManufacturers);
 app.get('/api/orders', getOrders);
 app.get('/orders', getOrders);
 
+// POST: Create a new order
+app.post('/api/orders', (req, res) => {
+  const { customer_id, customer_name, customer_email, customer_address, payment_method, total_amount, items } = req.body;
+
+  try {
+    const orderInfo = db.prepare(`
+      INSERT INTO orders (customer_id, customer_name, customer_email, customer_address, payment_method, total_amount)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(customer_id, customer_name, customer_email, customer_address, payment_method, total_amount);
+
+    const orderId = orderInfo.lastInsertRowid;
+
+    const insertItem = db.prepare(`
+      INSERT INTO order_items (order_id, product_id, product_name, price, quantity)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+    (items || []).forEach(item => {
+      insertItem.run(orderId, item.id, item.name, item.price, item.quantity);
+    });
+
+    res.json({
+      success: true,
+      orderId: orderId,
+      receiptData: {
+        orderId: orderId,
+        customer_name: customer_name,
+        email: customer_email,
+        address: customer_address,
+        payment_method: payment_method,
+        items: items,
+        total: total_amount,
+        order_date: new Date().toISOString(),
+        emailSent: false
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Customers
 app.get('/api/customers', getCustomers);
 app.get('/customers', getCustomers);
@@ -262,6 +302,22 @@ app.put('/api/products/:id', (req, res) => {
                   .run(name, price, stock, image, category_id, id);
     if (info.changes > 0) res.json({ success: true, message: 'Product updated' });
     else res.status(404).json({ success: false, message: 'Product not found' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT: Update product stock
+app.put('/api/products/:id/stock', (req, res) => {
+  const { id } = req.params;
+  const { stock } = req.body;
+  try {
+    const info = db.prepare('UPDATE products SET stock = ? WHERE id = ?').run(stock, id);
+    if (info.changes > 0) {
+      res.json({ success: true, message: 'Stock updated' });
+    } else {
+      res.status(404).json({ success: false, message: 'Product not found' });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
