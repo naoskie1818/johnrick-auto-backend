@@ -3,6 +3,7 @@ const Database = require('better-sqlite3');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 // Try to load nodemailer
 let nodemailer;
@@ -16,7 +17,11 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Database Connection
-const db = new Database('./data/johnrick_auto.db');
+const dataDir = path.join(__dirname, 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+const db = new Database(path.join(dataDir, 'johnrick_auto.db'));
 console.log('✅ Connected to SQLite database');
 
 // Email configuration
