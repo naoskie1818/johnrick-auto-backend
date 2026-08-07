@@ -143,7 +143,7 @@ const getOrders = (req, res) => {
 };
 
 const getCustomers = (req, res) => {
-  const customers = db.prepare(`SELECT DISTINCT customer_name, customer_email, customer_address FROM orders ORDER BY customer_name ASC`).all();
+  const customers = db.prepare(`SELECT id, name, email, phone, address FROM users WHERE role = 'customer' ORDER BY name ASC`).all();
   res.json(customers);
 };
 
@@ -212,6 +212,33 @@ app.post('/api/orders', (req, res) => {
         emailSent: false
       }
     });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT: Update order status
+app.put('/api/orders/:id/status', (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    const info = db.prepare('UPDATE orders SET status = ? WHERE id = ?').run(status, id);
+    if (info.changes > 0) {
+      res.json({ success: true, message: 'Order status updated' });
+    } else {
+      res.status(404).json({ success: false, message: 'Order not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET: Items for a specific order
+app.get('/api/orders/:id/items', (req, res) => {
+  const { id } = req.params;
+  try {
+    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(id);
+    res.json(items);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
