@@ -228,14 +228,25 @@ app.get('/api/manufacturers/:manufacturerId/products', (req, res) => {
   }
 });
 
-// Assign/update manufacturers for a product (used by admin add/edit forms)
+// Assign a single manufacturer to a product
 app.post('/api/products/:productId/manufacturers', (req, res) => {
   const { productId } = req.params;
-  const { manufacturerIds } = req.body;
+  const { manufacturer_id } = req.body;
   try {
-    db.prepare('DELETE FROM product_manufacturers WHERE product_id = ?').run(productId);
-    const insert = db.prepare('INSERT INTO product_manufacturers (product_id, manufacturer_id) VALUES (?, ?)');
-    (manufacturerIds || []).forEach(mid => insert.run(productId, mid));
+    db.prepare('INSERT OR IGNORE INTO product_manufacturers (product_id, manufacturer_id) VALUES (?, ?)')
+      .run(productId, manufacturer_id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Remove a single manufacturer from a product
+app.delete('/api/products/:productId/manufacturers/:manufacturerId', (req, res) => {
+  const { productId, manufacturerId } = req.params;
+  try {
+    db.prepare('DELETE FROM product_manufacturers WHERE product_id = ? AND manufacturer_id = ?')
+      .run(productId, manufacturerId);
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -313,6 +324,39 @@ app.post('/api/login', (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// Get all admin accounts (excludes regular customers)
+app.get('/api/admin/users', (req, res) => {
+  try {
+    const admins = db.prepare("SELECT id, name as username, role FROM users WHERE role != 'customer'").all();
+    res.json(admins);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create a new admin account
+app.post('/api/admin/users', (req, res) => {
+  const { username, password, role } = req.body;
+  try {
+    const info = db.prepare('INSERT INTO users (name, password, role) VALUES (?, ?, ?)')
+                   .run(username, password, role);
+    res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete an admin account
+app.delete('/api/admin/users/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    db.prepare('DELETE FROM users WHERE id = ?').run(id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
     // POST: User Signup
