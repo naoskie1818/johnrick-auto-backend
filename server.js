@@ -16,7 +16,7 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 // Database Connection
-const db = new Database('./johnrick_auto.db');
+const db = new Database('./data/johnrick_auto.db');
 console.log('✅ Connected to SQLite database');
 
 // Email configuration
