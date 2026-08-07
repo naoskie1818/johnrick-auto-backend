@@ -72,6 +72,14 @@ function initDatabase() {
     }
 
     db.prepare(`CREATE TABLE IF NOT EXISTS manufacturers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, logo TEXT)`).run();
+    db.prepare(`CREATE TABLE IF NOT EXISTS product_manufacturers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL,
+  manufacturer_id INTEGER NOT NULL,
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id) ON DELETE CASCADE,
+  UNIQUE(product_id, manufacturer_id)
+)`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, customer_name TEXT, rating INTEGER, comment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
 
     db.prepare(`INSERT OR IGNORE INTO users (name, email, password, role) VALUES ('admin', 'admin@johnrick.com', 'admin', 'admin')`).run();
@@ -181,6 +189,57 @@ app.get('/reviews', getReviews);
 app.get('/api/products', (req, res) => {
   const products = db.prepare("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id").all();
   res.json(products);
+});
+
+// Products
+app.get('/api/products', (req, res) => {
+  const products = db.prepare("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id").all();
+  res.json(products);
+});
+
+// Get manufacturers for a specific product (used by admin edit form)
+app.get('/api/products/:productId/manufacturers', (req, res) => {
+  const { productId } = req.params;
+  try {
+    const manufacturers = db.prepare(`
+      SELECT m.* FROM manufacturers m
+      JOIN product_manufacturers pm ON m.id = pm.manufacturer_id
+      WHERE pm.product_id = ?
+    `).all(productId);
+    res.json(manufacturers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get products for a specific manufacturer (used by "Shop by Manufacturer")
+app.get('/api/manufacturers/:manufacturerId/products', (req, res) => {
+  const { manufacturerId } = req.params;
+  try {
+    const products = db.prepare(`
+      SELECT p.*, c.name as category_name FROM products p
+      JOIN product_manufacturers pm ON p.id = pm.product_id
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE pm.manufacturer_id = ?
+    `).all(manufacturerId);
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Assign/update manufacturers for a product (used by admin add/edit forms)
+app.post('/api/products/:productId/manufacturers', (req, res) => {
+  const { productId } = req.params;
+  const { manufacturerIds } = req.body;
+  try {
+    db.prepare('DELETE FROM product_manufacturers WHERE product_id = ?').run(productId);
+    const insert = db.prepare('INSERT INTO product_manufacturers (product_id, manufacturer_id) VALUES (?, ?)');
+    (manufacturerIds || []).forEach(mid => insert.run(productId, mid));
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // FIXED: Added product update (PUT) route
