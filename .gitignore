@@ -1,1 +1,3 @@
-node_modules/
+johnrick_auto.db
+     node_modules/
+     .env
