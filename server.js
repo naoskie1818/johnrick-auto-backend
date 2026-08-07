@@ -237,7 +237,7 @@ app.post('/api/products', (req, res) => {
 });
 
 // TEMPORARY: Reset users table (call once, then remove)
-app.post('/api/reset-users', (req, res) => {
+app.get('/api/reset-users', (req, res) => {
   try {
     db.prepare('DROP TABLE IF EXISTS users').run();
     db.prepare(`CREATE TABLE users (
