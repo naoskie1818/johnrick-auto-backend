@@ -297,6 +297,24 @@ app.post('/api/products', (req, res) => {
     }
 });
 
+// POST: Admin Login
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = db.prepare('SELECT * FROM users WHERE name = ? AND password = ? AND role = ?').get(username, password, 'admin');
+        if (user) {
+            res.json({
+                success: true,
+                user: { id: user.id, username: user.name, email: user.email }
+            });
+        } else {
+            res.status(401).json({ success: false, message: 'Invalid username or password' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
     // POST: User Signup
     app.post('/api/customers/signup', (req, res) => {
     const { name, email, phone, address, password } = req.body;
