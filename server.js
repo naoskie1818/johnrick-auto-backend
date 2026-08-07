@@ -217,17 +217,16 @@ app.post('/api/products', (req, res) => {
 
 // POST: User Login
     app.post('/api/customers/login', (req, res) => {
-    const { name, password } = req.body; // Changed username to name
+    const { email, password } = req.body;
     try {
-        const user = db.prepare('SELECT * FROM users WHERE name = ? AND password = ?').get(name, password);
-        
+        const user = db.prepare('SELECT * FROM users WHERE email = ? AND password = ?').get(email, password);
         if (user) {
-            res.json({ 
-                success: true, 
-                user: { id: user.id, name: user.name, email: user.email } 
+            res.json({
+                success: true,
+                customer: { id: user.id, name: user.name, email: user.email, phone: user.phone, address: user.address }
             });
         } else {
-            res.status(401).json({ success: false, message: 'Invalid name or password' });
+            res.status(401).json({ success: false, message: 'Invalid email or password' });
         }
     } catch (err) {
         res.status(500).json({ error: err.message });
