@@ -80,7 +80,14 @@ function initDatabase() {
   FOREIGN KEY (manufacturer_id) REFERENCES manufacturers(id) ON DELETE CASCADE,
   UNIQUE(product_id, manufacturer_id)
 )`).run();
-    db.prepare(`CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, customer_name TEXT, rating INTEGER, comment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    db.prepare(`CREATE TABLE IF NOT EXISTS reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, customer_id INTEGER, customer_name TEXT, rating INTEGER, comment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+    const reviewColumns = db.prepare("PRAGMA table_info(reviews)").all().map(col => col.name);
+    if (!reviewColumns.includes('customer_id')) {
+      console.log('⚠️ Outdated reviews table detected — rebuilding...');
+      db.prepare('DROP TABLE reviews').run();
+      db.prepare(`CREATE TABLE reviews (id INTEGER PRIMARY KEY AUTOINCREMENT, product_id INTEGER, customer_id INTEGER, customer_name TEXT, rating INTEGER, comment TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)`).run();
+      console.log('✅ Reviews table rebuilt with correct schema');
+    }
 
     db.prepare(`INSERT OR IGNORE INTO users (name, email, password, role) VALUES ('admin', 'admin@johnrick.com', 'admin', 'admin')`).run();
     console.log('✅ Database Tables Ready');
@@ -360,6 +367,36 @@ app.get('/api/customers/:id/orders', (req, res) => {
 // Reviews
 app.get('/api/reviews', getReviews);
 app.get('/reviews', getReviews);
+
+// POST: Submit a product review
+app.post('/api/reviews', (req, res) => {
+  const { product_id, customer_id, customer_name, rating, comment } = req.body;
+  try {
+    const info = db.prepare(`
+      INSERT INTO reviews (product_id, customer_id, customer_name, rating, comment)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(product_id, customer_id, customer_name, rating, comment);
+    res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT: Mark an order as received by the customer
+app.put('/api/orders/:id/received', (req, res) => {
+  const { id } = req.params;
+  try {
+    const info = db.prepare("UPDATE orders SET status = 'Received', received_at = ? WHERE id = ?")
+                   .run(new Date().toISOString(), id);
+    if (info.changes > 0) {
+      res.json({ success: true, message: 'Order marked as received' });
+    } else {
+      res.status(404).json({ success: false, message: 'Order not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Products
 app.get('/api/products', (req, res) => {
