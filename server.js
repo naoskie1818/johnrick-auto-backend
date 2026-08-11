@@ -248,6 +248,39 @@ app.get('/api/orders/:id/items', (req, res) => {
 app.get('/api/customers', getCustomers);
 app.get('/customers', getCustomers);
 
+// Get a single customer by ID
+app.get('/api/customers/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    const customer = db.prepare('SELECT id, name, email, phone, address FROM users WHERE id = ? AND role = ?').get(id, 'customer');
+    if (customer) {
+      res.json(customer);
+    } else {
+      res.status(404).json({ error: 'Customer not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update a customer's profile
+app.put('/api/customers/:id', (req, res) => {
+  const { id } = req.params;
+  const { name, phone, address, password } = req.body;
+  try {
+    if (password) {
+      db.prepare('UPDATE users SET name = ?, phone = ?, address = ?, password = ? WHERE id = ?')
+        .run(name, phone, address, password, id);
+    } else {
+      db.prepare('UPDATE users SET name = ?, phone = ?, address = ? WHERE id = ?')
+        .run(name, phone, address, id);
+    }
+    res.json({ success: true, message: 'Profile updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Reviews
 app.get('/api/reviews', getReviews);
 app.get('/reviews', getReviews);
