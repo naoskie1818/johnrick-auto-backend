@@ -400,15 +400,7 @@ app.put('/api/orders/:id/received', (req, res) => {
 
 // Products
 app.get('/api/products', (req, res) => {
-  const products = db.prepare(`
-    SELECT p.*, c.name as category_name,
-           ROUND(AVG(r.rating), 1) as avg_rating,
-           COUNT(r.id) as review_count
-    FROM products p
-    LEFT JOIN categories c ON p.category_id = c.id
-    LEFT JOIN reviews r ON r.product_id = p.id
-    GROUP BY p.id
-  `).all();
+  const products = db.prepare("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id").all();
   res.json(products);
 });
 
