@@ -186,6 +186,32 @@ app.get('/api/health', (req, res) => res.json({ status: 'healthy' }));
 app.get('/api/categories', getCategories);
 app.get('/categories', getCategories);
 
+// POST: Create a new category
+app.post('/api/categories', (req, res) => {
+  const { name } = req.body;
+  try {
+    const info = db.prepare('INSERT INTO categories (name) VALUES (?)').run(name);
+    res.json({ success: true, id: info.lastInsertRowid });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE: Remove a category
+app.delete('/api/categories/:id', (req, res) => {
+  const { id } = req.params;
+  try {
+    const productCount = db.prepare('SELECT COUNT(*) as count FROM products WHERE category_id = ?').get(id);
+    if (productCount.count > 0) {
+      return res.status(400).json({ error: 'Cannot delete category with existing products' });
+    }
+    db.prepare('DELETE FROM categories WHERE id = ?').run(id);
+    res.json({ success: true, message: 'Category deleted' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Manufacturers
 app.get('/api/manufacturers', getManufacturers);
 app.get('/manufacturers', getManufacturers);
