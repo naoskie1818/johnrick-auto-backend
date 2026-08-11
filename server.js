@@ -233,6 +233,21 @@ app.put('/api/orders/:id/status', (req, res) => {
   }
 });
 
+// PUT: Cancel an order (customer-facing)
+app.put('/api/orders/:id/cancel', (req, res) => {
+  const { id } = req.params;
+  try {
+    const info = db.prepare("UPDATE orders SET status = 'Cancelled' WHERE id = ?").run(id);
+    if (info.changes > 0) {
+      res.json({ success: true, message: 'Order cancelled' });
+    } else {
+      res.status(404).json({ success: false, message: 'Order not found' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET: Items for a specific order
 app.get('/api/orders/:id/items', (req, res) => {
   const { id } = req.params;
