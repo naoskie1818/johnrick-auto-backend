@@ -99,8 +99,25 @@ function seedCategories() {
 
 function seedManufacturers() {
   try {
-    const insert = db.prepare("INSERT OR IGNORE INTO manufacturers (name) VALUES (?)");
-    ['Audi', 'BMW', 'Chevrolet', 'Ford', 'Honda', 'Hyundai', 'Isuzu', 'Kia', 'Mazda', 'Mercedes-Benz', 'Mitsubishi', 'Nissan', 'Suzuki', 'Toyota', 'Volkswagen'].forEach(brand => insert.run(brand));
+    const manufacturers = [
+      { name: 'Audi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Audi_2016.svg/200px-Audi_2016.svg.png' },
+      { name: 'BMW', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/BMW_logo_%28gray%29.svg/200px-BMW_logo_%28gray%29.svg.png' },
+      { name: 'Chevrolet', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Chevrolet_logo.svg/200px-Chevrolet_logo.svg.png' },
+      { name: 'Ford', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Ford_logo_flat.svg/200px-Ford_logo_flat.svg.png' },
+      { name: 'Honda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/76/Honda_logo.svg/200px-Honda_logo.svg.png' },
+      { name: 'Hyundai', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Hyundai_Motor_Company_logo.svg/200px-Hyundai_Motor_Company_logo.svg.png' },
+      { name: 'Isuzu', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Isuzu_logo.svg/200px-Isuzu_logo.svg.png' },
+      { name: 'Kia', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/KIA_logo2.svg/200px-KIA_logo2.svg.png' },
+      { name: 'Mazda', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Mazda_logo_with_emblem.svg/200px-Mazda_logo_with_emblem.svg.png' },
+      { name: 'Mercedes-Benz', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Mercedes-Logo.svg/200px-Mercedes-Logo.svg.png' },
+      { name: 'Mitsubishi', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Mitsubishi_logo.svg/200px-Mitsubishi_logo.svg.png' },
+      { name: 'Nissan', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Nissan_logo.svg/200px-Nissan_logo.svg.png' },
+      { name: 'Suzuki', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Suzuki_logo_2.svg/200px-Suzuki_logo_2.svg.png' },
+      { name: 'Toyota', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Toyota.svg/200px-Toyota.svg.png' },
+      { name: 'Volkswagen', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Volkswagen_logo_2019.svg/200px-Volkswagen_logo_2019.svg.png' }
+    ];
+    const insert = db.prepare("INSERT INTO manufacturers (name, logo) VALUES (?, ?) ON CONFLICT(name) DO UPDATE SET logo = excluded.logo");
+    manufacturers.forEach(m => insert.run(m.name, m.logo));
     console.log('✅ Manufacturers check/seeding complete');
   } catch (err) { console.error('❌ Manufacturers Seeding error:', err); }
 }
