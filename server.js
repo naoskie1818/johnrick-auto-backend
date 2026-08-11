@@ -281,6 +281,24 @@ app.put('/api/customers/:id', (req, res) => {
   }
 });
 
+// Get orders for a specific customer
+app.get('/api/customers/:id/orders', (req, res) => {
+  const { id } = req.params;
+  try {
+    const orders = db.prepare(`
+      SELECT o.*, GROUP_CONCAT(oi.product_name || ' (x' || oi.quantity || ')') as items_summary
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      WHERE o.customer_id = ?
+      GROUP BY o.id
+      ORDER BY o.id DESC
+    `).all(id);
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Reviews
 app.get('/api/reviews', getReviews);
 app.get('/reviews', getReviews);
