@@ -404,12 +404,6 @@ app.get('/api/products', (req, res) => {
   res.json(products);
 });
 
-// Products
-app.get('/api/products', (req, res) => {
-  const products = db.prepare("SELECT p.*, c.name as category_name FROM products p LEFT JOIN categories c ON p.category_id = c.id").all();
-  res.json(products);
-});
-
 // Get manufacturers for a specific product (used by admin edit form)
 app.get('/api/products/:productId/manufacturers', (req, res) => {
   const { productId } = req.params;
