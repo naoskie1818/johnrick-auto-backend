@@ -536,6 +536,48 @@ app.post('/api/products', (req, res) => {
     }
 });
 
+// POST: Google Login/Signup
+app.post('/api/customers/google-login', async (req, res) => {
+  const { credential } = req.body;
+
+  try {
+    const verifyResponse = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
+    const payload = await verifyResponse.json();
+
+    if (!verifyResponse.ok || !payload.email) {
+      return res.status(401).json({ success: false, message: 'Invalid Google token' });
+    }
+
+    const GOOGLE_CLIENT_ID = '1044396487559-us7no1mlv39c45l65aa62e9t1dtppina.apps.googleusercontent.com';
+    if (payload.aud !== GOOGLE_CLIENT_ID) {
+      return res.status(401).json({ success: false, message: 'Token audience mismatch' });
+    }
+
+    const { email, name, sub: googleId } = payload;
+
+    let user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+
+    if (user) {
+      if (!user.google_id) {
+        db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, user.id);
+      }
+    } else {
+      const info = db.prepare(`
+        INSERT INTO users (name, email, password, google_id, role)
+        VALUES (?, ?, '', ?, 'customer')
+      `).run(name, email, googleId);
+      user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+    }
+
+    res.json({
+      success: true,
+      customer: { id: user.id, name: user.name, email: user.email, phone: user.phone, address: user.address }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST: Admin Login
 app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
