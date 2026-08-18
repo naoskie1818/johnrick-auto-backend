@@ -63,13 +63,18 @@ function initDatabase() {
 
     // Self-healing users table: rebuild if the schema is outdated
     db.prepare(`CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE, phone TEXT, address TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'customer')`).run();
-    const userColumns = db.prepare("PRAGMA table_info(users)").all().map(col => col.name);
-    if (!userColumns.includes('name') || !userColumns.includes('email')) {
-      console.log('⚠️ Outdated users table detected — rebuilding...');
-      db.prepare('DROP TABLE users').run();
-      db.prepare(`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE, phone TEXT, address TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'customer')`).run();
-      console.log('✅ Users table rebuilt with correct schema');
-    }
+const userColumns = db.prepare("PRAGMA table_info(users)").all().map(col => col.name);
+if (!userColumns.includes('name') || !userColumns.includes('email')) {
+  console.log('⚠️ Outdated users table detected — rebuilding...');
+  db.prepare('DROP TABLE users').run();
+  db.prepare(`CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT UNIQUE, phone TEXT, address TEXT, password TEXT NOT NULL, role TEXT DEFAULT 'customer')`).run();
+  console.log('✅ Users table rebuilt with correct schema');
+}
+if (!userColumns.includes('google_id')) {
+  console.log('⚠️ Adding google_id column to users table...');
+  db.prepare('ALTER TABLE users ADD COLUMN google_id TEXT').run();
+  console.log('✅ google_id column added');
+}
 
     db.prepare(`CREATE TABLE IF NOT EXISTS manufacturers (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT UNIQUE NOT NULL, logo TEXT)`).run();
     db.prepare(`CREATE TABLE IF NOT EXISTS product_manufacturers (
