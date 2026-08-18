@@ -371,6 +371,21 @@ app.post('/api/orders/:id/checkout', async (req, res) => {
   }
 });
 
+// PUT: Reduce stock for all items in an order (called after payment confirmation)
+app.put('/api/orders/:id/reduce-stock', (req, res) => {
+  const { id } = req.params;
+  try {
+    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(id);
+    const updateStock = db.prepare('UPDATE products SET stock = stock - ? WHERE id = ?');
+    items.forEach(item => {
+      updateStock.run(item.quantity, item.product_id);
+    });
+    res.json({ success: true, message: 'Stock reduced' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Customers
 app.get('/api/customers', getCustomers);
 app.get('/customers', getCustomers);
