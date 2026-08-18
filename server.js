@@ -314,6 +314,63 @@ app.get('/api/orders/:id/items', (req, res) => {
   }
 });
 
+// POST: Create a PayMongo Checkout Session for an order
+app.post('/api/orders/:id/checkout', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const order = db.prepare('SELECT * FROM orders WHERE id = ?').get(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const items = db.prepare('SELECT * FROM order_items WHERE order_id = ?').all(id);
+
+    const lineItems = items.map(item => ({
+      currency: 'PHP',
+      amount: Math.round(item.price * 100),
+      name: item.product_name,
+      quantity: item.quantity
+    }));
+
+    const payload = {
+      data: {
+        attributes: {
+          line_items: lineItems,
+          payment_method_types: ['gcash'],
+          description: `Order #${order.id} - Johnrick Auto Supply`,
+          success_url: `https://johnrick-auto-frontend.vercel.app/payment-success.html?order_id=${order.id}`,
+          cancel_url: `https://johnrick-auto-frontend.vercel.app/payment-failed.html?order_id=${order.id}`
+        }
+      }
+    };
+
+    const paymongoResponse = await fetch('https://api.paymongo.com/v1/checkout_sessions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Basic ' + Buffer.from(process.env.PAYMONGO_SECRET_KEY + ':').toString('base64')
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const paymongoResult = await paymongoResponse.json();
+
+    if (!paymongoResponse.ok) {
+      console.error('PayMongo error:', paymongoResult);
+      return res.status(500).json({ error: 'Failed to create checkout session', details: paymongoResult });
+    }
+
+    res.json({
+      success: true,
+      checkoutUrl: paymongoResult.data.attributes.checkout_url
+    });
+  } catch (err) {
+    console.error('Checkout session error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Customers
 app.get('/api/customers', getCustomers);
 app.get('/customers', getCustomers);
